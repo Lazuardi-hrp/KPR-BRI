@@ -62,7 +62,7 @@ export default function HousingMap({
   const initializeMap = useCallback(() => {
     if (map.current || !window.L) return
 
-    const defaultCenter = [2.7209, 99.1721] // Pematang Siantar
+    const defaultCenter = [2.961946, 99.054264] // Pematang Siantar
 
     map.current = window.L.map(mapContainer.current).setView(defaultCenter, 13)
 
