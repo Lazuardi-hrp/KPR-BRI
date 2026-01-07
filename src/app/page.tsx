@@ -47,13 +47,14 @@ export default function LandingPage() {
       <section className="relative overflow-hidden py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Text */}
             <div>
-              <h1 className="text-5xl md:text-6xl font-bold text-pretty mb-6 text-foreground">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-pretty mb-6 text-foreground">
                 Temukan Rumah Impian Anda di Pematang Siantar
               </h1>
-              <p className="text-xl text-muted-foreground mb-8 text-pretty">
-                Jelajahi berbagai pilihan perumahan modern dengan fasilitas lengkap dan lokasi strategis. Cari dengan
-                mudah menggunakan peta interaktif kami.
+              <p className="text-lg sm:text-xl text-muted-foreground mb-8 text-pretty">
+                Jelajahi berbagai pilihan perumahan modern dengan fasilitas lengkap dan lokasi strategis.
+                Cari dengan mudah menggunakan peta interaktif kami.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/map">
@@ -63,17 +64,21 @@ export default function LandingPage() {
                   </Button>
                 </Link>
                 <Link href="#features">
-                  <Button variant="destructive" size="lg" className="w-full sm:w-auto bg-transparent border">
+                  <Button
+                    variant="destructive"
+                    size="lg"
+                    className="w-full sm:w-auto bg-transparent border">
                     Pelajari Lebih Lanjut
                   </Button>
                 </Link>
               </div>
             </div>
-            <div className="relative pl-[65px] h-[500px] bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl overflow-hidden">
+            {/* Image */}
+            <div className="relative bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl overflow-hidden flex justify-center items-center p-6 sm:p-10">
               <img
                 src="/rumah.png"
                 alt="Perumahan Modern"
-                className="object-contain"
+                className="w-full max-w-sm sm:max-w-md md:max-w-full h-auto object-contain"
               />
             </div>
           </div>

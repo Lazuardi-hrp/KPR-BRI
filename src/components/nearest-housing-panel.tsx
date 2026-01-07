@@ -50,7 +50,7 @@ export default function NearestHousingPanel({
   return (
     <>
       {showPanel && (
-        <div className="fixed bottom-6 right-4 sm:right-6 z-40 w-[calc(100%-2rem)] sm:max-w-sm max-h-[50vh] md:max-h-96">
+        <div className="fixed bottom-6 right-4 sm:right-6 z-[9998] w-[calc(100%-2rem)] sm:max-w-sm max-h-[50vh] md:max-h-96">
           <Card className="shadow-2xl h-full overflow-hidden flex flex-col">
             <CardHeader className="pb-2 sm:pb-3 flex-shrink-0">
               <div className="flex items-start justify-between gap-2">

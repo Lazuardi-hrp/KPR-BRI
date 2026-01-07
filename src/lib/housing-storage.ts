@@ -6,15 +6,28 @@ export interface Housing {
   lat: number
   lng: number
   description: string
-  totalUnits: number
   availableUnits: number
   priceRange: string
   image?: string
-  facilities: string[]
+  images?: string[]
   contactPerson: string
   phone: string
   email: string
+  roofType?: string
+  wallType?: string
+  foundationType?: string
+  price?: string
+  buildingArea?: string
+  landArea?: string
+  bedrooms?: number
+  bathrooms?: number
+  locationId?: string
+  subsidiUnits?: number
+  soldSubsidiUnits?: number
+  commercialUnits?: number
+  soldCommercialUnits?: number
 }
+
 
 const STORAGE_KEY = "housing_data"
 
@@ -25,11 +38,12 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.997136,
     lng: 99.065307,
     description: "JALAN SISINGAMANGARAJA no. 75 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Sitalasari, Bukit Sofa",
-    totalUnits: 150,
     availableUnits: 45,
+    soldSubsidiUnits: 5,
+    subsidiUnits: 8,
     priceRange: "Rp 166.000.000",
-    image: "/kpr-assets/mutiara.jpg",
-    facilities: ["Taman", "Kolam Renang", "Lapangan Olahraga", "Keamanan 24 Jam"],
+    image: "/kpr-assets/innara.jpg",
+    images:["/kpr-assets/innara.jpg", "/kpr-assets/al-falah.jpg", "/luxury-residence.jpg"],
     contactPerson: "Budi Santoso",
     phone: "0821-1234-5678",
     email: "info@greenvalley.com",
@@ -40,11 +54,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.990070,
     lng: 99.093158,
     description: "Kelurahan sumber jaya kec.siantar martoba kota pematangsiantar no. 1 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Martoba, Sumber Jaya",
-    totalUnits: 200,
     availableUnits: 78,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/mutiara.jpg",
-    facilities: ["Masjid", "Taman Bermain", "Minimarket", "Jalan Raya"],
     contactPerson: "Siti Nurhaliza",
     phone: "0812-9876-5432",
     email: "sales@sinarindah.com",
@@ -55,11 +67,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.961727,
     lng: 99.053849,
     description: "JL. BATU PERMATA 6 no. 6 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Sitalasari, Bah Kapul",
-    totalUnits: 120,
     availableUnits: 32,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/magakovii.jpg",
-    facilities: ["Clubhouse", "Gym", "Tenis Court", "Gate House", "Taman Eksklusif"],
     contactPerson: "Ahmad Wijaya",
     phone: "0831-5555-6666",
     email: "premium@bukitsejahtera.com",
@@ -70,11 +80,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 3.011513,
     lng: 99.076415,
     description: "Jalan cipto no. 22 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Selatan, Simalungun",
-    totalUnits: 300,
     availableUnits: 125,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/sfs.jpg",
-    facilities: ["Taman", "Sekolah Terdekat", "Pasar", "Terminal"],
     contactPerson: "Dewi Lestari",
     phone: "0856-7777-8888",
     email: "info@majujaya.com",
@@ -85,11 +93,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.961946,
     lng: 99.054264,
     description: "Jl. Sibatu-batu Blok I no. 1 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Sitalasari, Bah Kapul",
-    totalUnits: 180,
     availableUnits: 60,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/sumbawa.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -100,11 +106,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.946931,
     lng: 99.037881,
     description: "Jalan Antara, Kelurahan Setia Negara, Kecamatan Siantar Sitalasari, Kota Pematang Siantar. no. - SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Sitalasari, Setia Negara",
-    totalUnits: 180,
     availableUnits: 60,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/puri.jpeg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -115,11 +119,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 3.008113,
     lng: 99.073257,
     description: "JL. ARTELERI no. 24 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Sitalasari, Bukit Sofa",
-    totalUnits: 180,
     availableUnits: 60,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/eva.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -130,11 +132,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.980541,
     lng: 99.037384,
     description: "JLN. ARU no. 6 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Barat, Bantan",
-    totalUnits: 180,
     availableUnits: 60,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/prima.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -145,11 +145,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 3.011792,
     lng: 99.096234,
     description: "Jalan Aru no. 6 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Barat, Bantan",
-    totalUnits: 180,
     availableUnits: 60,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/al-falah.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -160,11 +158,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.959112,
     lng: 99.034894,
     description: "Jalan Hj Ulakma Sinaga, Ruko Graha Harmoni no. 1 SUMATERA UTARA, KAB SIMALUNGUN, Siantar, Rambung Merah",
-    totalUnits: 180,
     availableUnits: 60,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/viyata.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -175,11 +171,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.984882,
     lng: 99.087295,
     description: "JL Sutomo Ruko Siantar Blok BC no. B17 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Timur, Pahlawan",
-    totalUnits: 87,
     availableUnits: 87,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/kerang.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -190,11 +184,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 3.006688,
     lng: 99.078130,
     description: "Jln Medan outer Ringroad no. D-1 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Martoba, Tanjung Tongah",
-    totalUnits: 64,
     availableUnits: 52,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/ringroad.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -205,11 +197,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.991784,
     lng: 99.089907,
     description: "JALAN SUMBER JAYA II, BLOK GADUNG no. - SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Martoba, Sumber Jaya",
-    totalUnits: 76,
     availableUnits: 76,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/luxury.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -220,11 +210,9 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 2.985247,
     lng: 99.089722,
     description: "Jalan Sangnawaluh no. 5 B SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Timur, Siopat Suhu",
-    totalUnits: 76,
     availableUnits: 76,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/dimensi.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -235,11 +223,22 @@ export const getInitialHousingData = (): Housing[] => [
     lat: 3.011792,
     lng: 99.096234,
     description: "JL. COKLAT RAYA no. 18 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Martoba, Sumber Jaya",
-    totalUnits: 76,
     availableUnits: 76,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/asido.jpg",
-    facilities: ["Taman Komunitas", "Ruang Serbaguna", "Perpustakaan", "Jogging Track"],
+    contactPerson: "Roni Handoko",
+    phone: "0821-2222-3333",
+    email: "contact@harmonisent.com",
+  },
+    {
+    id:16,
+    name: "GRIYA TAMA 3",
+    lat: 3.011792,
+    lng: 99.096234,
+    description: "JL. COKLAT RAYA no. 18 SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Martoba, Sumber Jaya",
+    availableUnits: 76,
+    priceRange: "Rp 166.000.000",
+    image: "/kpr-assets/asido.jpg",
     contactPerson: "Roni Handoko",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",

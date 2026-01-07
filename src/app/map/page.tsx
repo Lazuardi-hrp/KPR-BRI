@@ -16,7 +16,6 @@ export default function MapPage() {
   const [selectedHousing, setSelectedHousing] = useState<Housing | null>(null)
   const [housingList, setHousingList] = useState<Housing[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
-  // Lokasi pengguna (geo API)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [showSidebar, setShowSidebar] = useState(false)
   
