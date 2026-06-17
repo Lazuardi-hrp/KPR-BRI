@@ -74,7 +74,7 @@ export default function LandingPage() {
               </div>
             </div>
             {/* Image */}
-            <div className="relative bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl overflow-hidden flex justify-center items-center p-6 sm:p-10">
+            <div className="relative bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl overflow-hidden flex justify-center items-center sm:p-1">
               <img
                 src="/rumah.png"
                 alt="Perumahan Modern"
@@ -247,8 +247,8 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4">Kontak</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Email: info@perumahanps.com</li>
-                <li>Telepon: (0621) 123-4567</li>
+                <li>Email: pematangsiantarbri.com</li>
+                <li>Telepon: (0813) 71901927</li>
                 <li>Alamat: Pematang Siantar, Sumatera Utara</li>
               </ul>
             </div>

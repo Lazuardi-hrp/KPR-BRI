@@ -232,7 +232,7 @@ export default function HousingPopup({ housing, onClose }: HousingPopupProps) {
             </div>
           </Card>
         </div>
-      </div>    
+      </div>   
     </>
   )
 }
