@@ -11,7 +11,6 @@ type Housing = {
   image?: string
   images?: string[]  
   availableUnits: number
-  totalUnits: number
 
   roofType?: string
   wallType?: string
@@ -33,7 +32,10 @@ type HousingPopupProps = {
 }
 
 export default function HousingPopup({ housing, onClose }: HousingPopupProps) {
-  const availabilityPercent = Math.round((housing.availableUnits / housing.totalUnits) * 100)
+  const totalUnits = (housing.subsidiUnits ?? 0) + (housing.commercialUnits ?? 0)
+  const availabilityPercent = totalUnits > 0
+  ? Math.round((housing.availableUnits / totalUnits) * 100)
+  : 0
   const availabilityStatus =
     availabilityPercent > 50 ? "Tinggi" : availabilityPercent > 20 ? "Sedang" : "Rendah"
 
