@@ -6,7 +6,7 @@ import { MapPin, ChevronLeft, Menu, X } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import HousingMap from "../../components/housing-map"
 import HousingPopup from "../../components/housing-popup"
-import NearestHousingPanel from "../../components/nearest-housing-panel"
+import FloatingLocationDetector from "../../components/floating-location-detector"
 import Image from "next/image"
 
 // Import tipe Housing dari storage
@@ -146,12 +146,12 @@ export default function MapPage() {
         />
       )}
 
-      {/* Floating Nearest Housing Panel */}
+      {/* Floating Location Detector */}
       {isLoaded && (
-        <NearestHousingPanel
+        <FloatingLocationDetector
           housingList={housingList}
-          onUserLocationDetected={setUserLocation}
           onSelectHousing={setSelectedHousing}
+          userLocation={userLocation}
         />
       )}
     </div>
