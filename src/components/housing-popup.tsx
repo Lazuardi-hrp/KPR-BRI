@@ -113,84 +113,91 @@ export default function HousingPopup({ housing, onClose }: HousingPopupProps) {
 
               {/* Housing Types Section */}
               {housing.housingTypes && housing.housingTypes.length > 0 && (
-                <div className="border-b border-border pb-3 sm:pb-4 md:pb-5">
+                <div className="border-b border-border pb-4 sm:pb-5">
                   <h3 className="font-bold text-sm sm:text-base md:text-lg mb-4 text-foreground">Tipe Rumah</h3>
-                  <div className="space-y-6">
+                  <div className="space-y-8">
                     {housing.housingTypes.map((type, index) => (
-                      <div key={type.id} className="pb-6 border-b border-border last:border-b-0 last:pb-0">
-                        {/* Type Header */}
-                        <h4 className="font-semibold text-sm md:text-base mb-4 text-foreground">
-                          {index + 1}. Tipe {type.typeNumber}
-                          {type.subsidi && <span className="text-xs ml-2 text-[#ff8c42] font-bold">(subsidi)</span>}
-                        </h4>
-
-                        {/* Photo & Floor Plan Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                          {/* Photo */}
-                          {type.photo && (
-                            <div className="bg-gray-100 rounded-lg overflow-hidden">
-                              <img
-                                src={type.photo}
-                                alt={`Foto Tipe ${type.typeNumber}`}
-                                className="w-full h-48 sm:h-40 object-cover"
-                              />
-                            </div>
-                          )}
-
-                          {/* Floor Plan */}
-                          {type.floorPlan && (
-                            <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center p-2">
-                              <img
-                                src={type.floorPlan}
-                                alt={`Denah Tipe ${type.typeNumber}`}
-                                className="max-w-full max-h-48 sm:max-h-40 object-contain"
-                              />
-                            </div>
-                          )}
+                      <div key={type.id} className="last:pb-0">
+                        {/* Type Header with Divider */}
+                        <div className="pb-3 mb-4 border-b border-gray-300">
+                          <h4 className="font-semibold text-sm sm:text-base text-foreground">
+                            {index + 1}. Tipe {type.typeNumber}
+                            {type.subsidi && <span className="text-xs ml-2 text-[#ff8c42] font-bold">(subsidi)</span>}
+                          </h4>
                         </div>
 
-                        {/* Price & Specs */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                          {type.price && (
-                            <div className="bg-blue-50 p-3 rounded-lg">
-                              <p className="text-xs text-muted-foreground font-semibold mb-1">Harga</p>
-                              <p className="text-xs sm:text-sm font-bold text-blue-700">
-                                Rp {(type.price / 1000000).toFixed(0)} Juta
-                              </p>
-                            </div>
-                          )}
-                          {type.buildingArea && (
-                            <div className="bg-green-50 p-3 rounded-lg">
-                              <p className="text-xs text-muted-foreground font-semibold mb-1">Luas Bangunan</p>
-                              <p className="text-xs sm:text-sm font-bold text-green-700">{type.buildingArea} m²</p>
-                            </div>
-                          )}
-                          {type.landArea && (
-                            <div className="bg-amber-50 p-3 rounded-lg">
-                              <p className="text-xs text-muted-foreground font-semibold mb-1">Luas Lahan</p>
-                              <p className="text-xs sm:text-sm font-bold text-amber-700">{type.landArea} m²</p>
-                            </div>
-                          )}
-                          {(type.bedrooms || type.bathrooms) && (
-                            <div className="bg-purple-50 p-3 rounded-lg">
-                              <p className="text-xs text-muted-foreground font-semibold mb-1">Kamar</p>
-                              <p className="text-xs sm:text-sm font-bold text-purple-700">
-                                {type.bedrooms ? `Tidur: ${type.bedrooms}` : ""}{type.bedrooms && type.bathrooms ? " | " : ""}
-                                {type.bathrooms ? `Mandi: ${type.bathrooms}` : ""}
-                              </p>
-                            </div>
-                          )}
+                        {/* Main Content: Photo + Floor Plan (left) | Specs (right) */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+                          {/* Left: Photo & Floor Plan */}
+                          <div className="lg:col-span-2 space-y-3">
+                            {/* Photo */}
+                            {type.photo && (
+                              <div className="bg-gray-100 rounded-lg overflow-hidden">
+                                <img
+                                  src={type.photo}
+                                  alt={`Foto Tipe ${type.typeNumber}`}
+                                  className="w-full h-40 sm:h-48 object-cover"
+                                />
+                              </div>
+                            )}
+
+                            {/* Floor Plan */}
+                            {type.floorPlan && (
+                              <div className="bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center p-2">
+                                <img
+                                  src={type.floorPlan}
+                                  alt={`Denah Tipe ${type.typeNumber}`}
+                                  className="max-w-full max-h-56 object-contain"
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right: Info Specs */}
+                          <div className="lg:col-span-1 space-y-2.5">
+                            {type.price && (
+                              <div className="pb-2 border-b border-gray-200">
+                                <p className="text-xs text-muted-foreground font-semibold">Harga</p>
+                                <p className="text-sm font-bold text-[#003d82]">
+                                  Rp {(type.price / 1000000).toFixed(0)} Juta
+                                </p>
+                              </div>
+                            )}
+                            {type.buildingArea && (
+                              <div className="pb-2 border-b border-gray-200">
+                                <p className="text-xs text-muted-foreground font-semibold">Luas Bangunan</p>
+                                <p className="text-sm font-bold text-[#003d82]">{type.buildingArea} m²</p>
+                              </div>
+                            )}
+                            {type.landArea && (
+                              <div className="pb-2 border-b border-gray-200">
+                                <p className="text-xs text-muted-foreground font-semibold">Luas Lahan</p>
+                                <p className="text-sm font-bold text-[#003d82]">{type.landArea} m²</p>
+                              </div>
+                            )}
+                            {type.bedrooms && (
+                              <div className="pb-2 border-b border-gray-200">
+                                <p className="text-xs text-muted-foreground font-semibold">Kamar Tidur</p>
+                                <p className="text-sm font-bold text-[#003d82]">{type.bedrooms}</p>
+                              </div>
+                            )}
+                            {type.bathrooms && (
+                              <div>
+                                <p className="text-xs text-muted-foreground font-semibold">Kamar Mandi</p>
+                                <p className="text-sm font-bold text-[#003d82]">{type.bathrooms}</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {/* Specs List */}
                         {type.specs && type.specs.length > 0 && (
-                          <div className="bg-gray-50 p-3 rounded-lg">
-                            <p className="text-xs font-semibold text-foreground mb-2">Spesifikasi</p>
+                          <div>
+                            <h5 className="font-semibold text-sm text-foreground mb-3 text-[#003d82]">Spesifikasi Teknis</h5>
                             <ul className="space-y-1.5">
                               {type.specs.map((spec, specIndex) => (
-                                <li key={specIndex} className="text-xs text-gray-600 flex items-start gap-2">
-                                  <span className="text-[#003d82] font-bold flex-shrink-0">•</span>
-                                  <span>{spec}</span>
+                                <li key={specIndex} className="text-xs sm:text-sm text-gray-700">
+                                  <span className="text-[#003d82]">{spec}</span>
                                 </li>
                               ))}
                             </ul>
