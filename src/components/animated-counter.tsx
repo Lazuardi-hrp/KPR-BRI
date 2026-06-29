@@ -11,7 +11,13 @@ interface AnimatedCounterProps {
 export function AnimatedCounter({ end, duration = 2000, suffix = "" }: AnimatedCounterProps) {
   const [count, setCount] = useState(0)
   const [hasAnimated, setHasAnimated] = useState(false)
+  const [isClient, setIsClient] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Mark as client-side to avoid hydration mismatch
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -60,10 +66,12 @@ export function AnimatedCounter({ end, duration = 2000, suffix = "" }: AnimatedC
     return () => cancelAnimationFrame(animationFrameId)
   }, [hasAnimated, end, duration])
 
+  // Format number with thousand separator
+  const formattedCount = count.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+
   return (
     <div ref={containerRef} className="text-4xl font-bold text-primary mb-2">
-      {count.toLocaleString("id-ID")}
-      {suffix}
+      {isClient ? `${formattedCount}${suffix}` : `0${suffix}`}
     </div>
   )
 }
