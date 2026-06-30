@@ -210,23 +210,32 @@ export default function HousingPopup({ housing, onClose }: HousingPopupProps) {
               )}
 
               {/* Spesifikasi Teknis Section */}
-              <div className="border-b border-border pb-3 sm:pb-4 md:pb-5">
-                <h3 className="font-bold text-sm sm:text-base md:text-lg mb-3">Spesifikasi Teknis</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                  <div className="bg-slate-50 p-2.5 sm:p-3 md:p-4 rounded-lg">
-                    <p className="text-xs text-muted-foreground font-semibold mb-1">Atap</p>
-                    <p className="text-xs sm:text-sm font-bold truncate">{housing.roofType || "Tidak ada data"}</p>
-                  </div>
-                  <div className="bg-slate-50 p-2.5 sm:p-3 md:p-4 rounded-lg">
-                    <p className="text-xs text-muted-foreground font-semibold mb-1">Dinding</p>
-                    <p className="text-xs sm:text-sm font-bold truncate">{housing.wallType || "Tidak ada data"}</p>
-                  </div>
-                  <div className="bg-slate-50 p-2.5 sm:p-3 md:p-4 rounded-lg sm:col-span-2">
-                    <p className="text-xs text-muted-foreground font-semibold mb-1">Lantai & Pondasi</p>
-                    <p className="text-xs sm:text-sm font-bold truncate">
-                      {housing.foundationType || "Tidak ada data"}
-                    </p>
-                  </div>
+              <div className="border-b border-border pb-4 sm:pb-5">
+                <h3 className="font-bold text-sm sm:text-base md:text-lg mb-4 text-foreground">Spesifikasi Teknis</h3>
+                <div className="space-y-3 sm:space-y-4">
+                  {/* Atap */}
+                  {housing.roofType && (
+                    <div>
+                      <p className="text-sm font-semibold text-[#003d82]">a. Atap</p>
+                      <p className="text-xs sm:text-sm text-gray-700 ml-4 mt-1">{housing.roofType}</p>
+                    </div>
+                  )}
+
+                  {/* Dinding */}
+                  {housing.wallType && (
+                    <div>
+                      <p className="text-sm font-semibold text-[#003d82]">b. Dinding</p>
+                      <p className="text-xs sm:text-sm text-gray-700 ml-4 mt-1">{housing.wallType}</p>
+                    </div>
+                  )}
+
+                  {/* Lantai & Pondasi */}
+                  {housing.foundationType && (
+                    <div>
+                      <p className="text-sm font-semibold text-[#003d82]">c. Lantai & Pondasi</p>
+                      <p className="text-xs sm:text-sm text-gray-700 ml-4 mt-1">{housing.foundationType}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
