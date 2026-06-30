@@ -49,6 +49,7 @@ export const getInitialHousingData = (): Housing[] => [
     email: "info@greenvalley.com",
     roofType: "Atap Genting",
     wallType: "Dinding Beton",
+    foundationType: "Pondasi Batu Kali",
   },
   {
     id: 2,
@@ -62,6 +63,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0812-9876-5432",
     email: "sales@sinarindah.com",
+    roofType: "Atap Genting Berkualitas",
+    wallType: "Dinding Bata Merah & Semen",
+    foundationType: "Pondasi Beton Bertulang",
   },
   {
     id: 3,
@@ -75,6 +79,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0831-5555-6666",
     email: "premium@bukitsejahtera.com",
+    roofType: "Atap Spandek & Asbestos",
+    wallType: "Dinding Beton Precast",
+    foundationType: "Pondasi Tiang Pancang",
   },
   {
     id: 4,
@@ -88,6 +95,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0856-7777-8888",
     email: "info@majujaya.com",
+    roofType: "Atap Baja Ringan & Genteng Keramik",
+    wallType: "Dinding Bata Ekspos & Finish Cat",
+    foundationType: "Pondasi Plat Beton",
   },
   {
     id: 5,
@@ -101,6 +111,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Genting Flat & Baja Ringan",
+    wallType: "Dinding Bata Merah Dicat Rapi",
+    foundationType: "Pondasi Batu Kali & Beton",
   },
   {
     id: 6,
@@ -114,6 +127,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Baja Ringan & Genteng Keramik Premium",
+    wallType: "Dinding Bata Merah & Plaster Cat",
+    foundationType: "Pondasi Beton Bertulang Rapi",
   },
   {
     id: 7,
@@ -127,6 +143,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Spandek & Genteng Metal",
+    wallType: "Dinding Beton Finishing Cat Modern",
+    foundationType: "Pondasi Tiang Pancang Beton",
   },
   {
     id: 8,
@@ -140,6 +159,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Genting Keramik berkualitas tinggi",
+    wallType: "Dinding Bata Merah & Plaster Halus",
+    foundationType: "Pondasi Batu Kali & Semen",
   },
   {
     id:9,
@@ -153,6 +175,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Baja Ringan & Genteng Metal Premium",
+    wallType: "Dinding Bata Merah Dicat Rapi",
+    foundationType: "Pondasi Plat Beton Berkualitas",
   },
     {
     id:10,
@@ -166,6 +191,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Spandek & Genteng Keramik",
+    wallType: "Dinding Beton Precast & Cat",
+    foundationType: "Pondasi Tiang Beton Bertulang",
   },
     {
     id:11,
@@ -179,6 +207,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Baja Ringan & Genteng Keramik",
+    wallType: "Dinding Bata Merah & Plaster Finish",
+    foundationType: "Pondasi Beton Rapi & Kuat",
   },
       {
     id:12,
@@ -192,6 +223,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Genting Keramik Premium & Baja",
+    wallType: "Dinding Beton Modern & Finish Cat",
+    foundationType: "Pondasi Plat Beton Berkualitas",
   },
   {
     id:13,
@@ -205,6 +239,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Baja Ringan & Genteng Metal",
+    wallType: "Dinding Bata Merah Dicat Premium",
+    foundationType: "Pondasi Beton Rapat & Kuat",
   },
   {
     id:14,
@@ -218,6 +255,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Spandek & Genteng Keramik",
+    wallType: "Dinding Beton Precast Rapi",
+    foundationType: "Pondasi Tiang Pancang Beton",
   },
   {
     id:15,
@@ -231,6 +271,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Genting Keramik & Baja Ringan",
+    wallType: "Dinding Bata Merah & Plaster Cat",
+    foundationType: "Pondasi Beton Bertulang Rapi",
   },
     {
     id:16,
@@ -244,6 +287,9 @@ export const getInitialHousingData = (): Housing[] => [
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
+    roofType: "Atap Baja Ringan & Genteng Keramik",
+    wallType: "Dinding Bata Merah Dicat Modern",
+    foundationType: "Pondasi Plat Beton Berkualitas",
   },
   
 ]
