@@ -1,186 +1,162 @@
 "use client"
 
-import { useEffect, useRef, useCallback } from "react"
-
-// Allow Leaflet from CDN
-declare global {
-  interface Window {
-    L: any
-  }
-}
+import { useEffect, useRef } from "react"
+import L from "leaflet"
+import "leaflet/dist/leaflet.css"
+import type { Housing } from "../lib/housing"
 
 interface HousingMapProps {
-  housingList: any[]
-  selectedHousing: any
-  onMarkerClick: (housing: any) => void
+  housingList: Housing[]
+  selectedHousing: Housing | null
+  onMarkerClick: (housing: Housing) => void
   userLocation?: { lat: number; lng: number } | null
+  userLocationLabel?: string
+  coordLabels?: { north: string; south: string; east: string; west: string }
 }
+
+const CENTER: [number, number] = [2.961946, 99.054264] // Pematang Siantar
+
+/**
+ * Brand pins, drawn inline. Nothing is fetched from a third-party host, and the
+ * selected pin is orange — the same "selected" colour as the sidebar row and the
+ * popup.
+ */
+const pinIcon = (active: boolean) => {
+  const w = active ? 36 : 28
+  const h = active ? 46 : 36
+  // Leaflet renders divIcons as focusable buttons, so the hit area has to clear
+  // 44×44 even though the pin art is smaller.
+  const box = Math.max(w, 44)
+  const boxH = Math.max(h, 44)
+  return L.divIcon({
+    className: `atlas-marker${active ? " atlas-marker-active" : ""}`,
+    html: `
+      <span style="display:flex;align-items:flex-end;justify-content:center;width:${box}px;height:${boxH}px">
+        <svg width="${w}" height="${h}" viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M14 35.5C14 35.5 26.5 21.9 26.5 13.6 26.5 6.6 20.9.9 14 .9S1.5 6.6 1.5 13.6C1.5 21.9 14 35.5 14 35.5Z"
+                style="fill:${active ? "var(--brand-orange)" : "var(--brand)"};stroke:${active ? "var(--brand-orange-fg)" : "var(--brand-deep)"}"
+                stroke-width="1.4"/>
+          <circle cx="14" cy="13.4" r="4.6" style="fill:var(--background)"/>
+        </svg>
+      </span>`,
+    iconSize: [box, boxH],
+    iconAnchor: [box / 2, boxH],
+    popupAnchor: [0, -h + 4],
+  })
+}
+
+/** The user's own position: a sky dot that pings, unmistakably not a perumahan. */
+const userIcon = () =>
+  L.divIcon({
+    className: "atlas-marker",
+    html: `
+      <span style="display:flex;align-items:center;justify-content:center;width:44px;height:44px">
+        <span class="marker-ping" style="position:relative;display:block;width:16px;height:16px;border-radius:9999px;
+                     background:var(--brand-sky);border:2px solid var(--background)"></span>
+      </span>`,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22],
+  })
 
 export default function HousingMap({
   housingList,
   selectedHousing,
   onMarkerClick,
   userLocation,
+  userLocationLabel = "Lokasi Anda",
+  coordLabels = { north: "LU", south: "LS", east: "BT", west: "BB" },
 }: HousingMapProps) {
-  const mapContainer = useRef<HTMLDivElement | null>(null)
-  const map = useRef<any>(null)
-  const markers = useRef<Record<string, any>>({})
-  const userMarker = useRef<any>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const mapRef = useRef<L.Map | null>(null)
+  const markersRef = useRef<Record<string, L.Marker>>({})
+  const userMarkerRef = useRef<L.Marker | null>(null)
+  // Keep the latest click handler without re-binding every marker.
+  const onMarkerClickRef = useRef(onMarkerClick)
+  const didFitRef = useRef(false)
 
-  /**
-   * -------------------------------
-   *  LOAD LEAFLET FROM CDN
-   * -------------------------------
-   */
   useEffect(() => {
-    if (!window.L) {
-      loadLeaflet()
-    } else {
-      initializeMap()
-    }
-  }, [])
+    onMarkerClickRef.current = onMarkerClick
+  }, [onMarkerClick])
 
-  const loadLeaflet = () => {
-    // CSS
-    const css = document.createElement("link")
-    css.rel = "stylesheet"
-    css.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
-    document.head.appendChild(css)
+  // Create the map once.
+  useEffect(() => {
+    if (mapRef.current || !containerRef.current) return
 
-    // JS
-    const script = document.createElement("script")
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"
-    script.onload = initializeMap
-    document.body.appendChild(script)
-  }
-
-  /**
-   * -------------------------------
-   *  INITIAL MAP SETUP
-   * -------------------------------
-   */
-  const initializeMap = useCallback(() => {
-    if (map.current || !window.L) return
-
-    const defaultCenter = [2.961946, 99.054264] // Pematang Siantar
-
-    map.current = window.L.map(mapContainer.current).setView(defaultCenter, 13)
-
-    window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
+    const map = L.map(containerRef.current, { zoomControl: true }).setView(CENTER, 13)
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
-    }).addTo(map.current)
+    }).addTo(map)
+    mapRef.current = map
 
-    renderHousingMarkers()
-    renderUserLocation()
+    return () => {
+      map.remove()
+      mapRef.current = null
+      markersRef.current = {}
+      userMarkerRef.current = null
+    }
   }, [])
 
-  /**
-   * -------------------------------
-   *  USER LOCATION MARKER
-   * -------------------------------
-   */
-  const renderUserLocation = useCallback(() => {
-    if (!userLocation || !map.current || !window.L) return
+  // Housing markers.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
 
-    // Remove previous marker
-    if (userMarker.current) {
-      map.current.removeLayer(userMarker.current)
-    }
-
-    // Custom icon using Tailwind + DIV
-    const userIcon = window.L.divIcon({
-      html: `
-        <div class="relative flex items-center justify-center">
-          <div class="absolute w-6 h-6 bg-blue-400 rounded-full opacity-30 animate-pulse"></div>
-          <div class="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-md"></div>
-        </div>
-      `,
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-      className: "user-marker",
-    })
-
-    const marker = window.L.marker([userLocation.lat, userLocation.lng], {
-      icon: userIcon,
-      title: "Lokasi Anda",
-      zIndexOffset: 1000,
-    })
-
-    marker.bindPopup(
-      `
-      <div class="font-semibold text-sm">Lokasi Anda</div>
-      <div class="text-xs text-gray-600">${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)}</div>
-      `
-    )
-
-    marker.addTo(map.current)
-    map.current.setView([userLocation.lat, userLocation.lng], 14)
-
-    userMarker.current = marker
-  }, [userLocation])
-
-  /**
-   * -------------------------------
-   *  HOUSING MARKERS
-   * -------------------------------
-   */
-  const renderHousingMarkers = useCallback(() => {
-    if (!map.current || !window.L) return
-
-    // Remove old markers
-    Object.values(markers.current).forEach((m) => map.current.removeLayer(m))
-    markers.current = {}
+    Object.values(markersRef.current).forEach((m) => m.remove())
+    markersRef.current = {}
 
     housingList.forEach((house) => {
-      const isSelected = selectedHousing?.id === house.id
-
-      const iconUrl = isSelected
-        ? "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png"
-        : "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png"
-
-      const markerIcon = window.L.icon({
-        iconUrl,
-        shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-        iconSize: [25, 41],
-        iconAnchor: [12, 41],
-        popupAnchor: [1, -34],
-        shadowSize: [41, 41],
+      const active = selectedHousing?.id === house.id
+      const marker = L.marker([house.lat, house.lng], {
+        icon: pinIcon(active),
+        title: house.name,
+        zIndexOffset: active ? 900 : 0,
       })
+        .bindPopup(`<div class="font-semibold text-sm">${house.name}</div>`)
+        .on("click", () => {
+          map.closePopup()
+          onMarkerClickRef.current(house)
+        })
+        .addTo(map)
 
-      const marker = window.L.marker([house.lat, house.lng], { icon: markerIcon })
-
-      marker.bindPopup(`<div class="font-semibold">${house.name}</div>`)
-
-      marker.on("click", () => {
-        map.current.closePopup()
-        onMarkerClick(house)
-      })
-
-      marker.addTo(map.current)
-      markers.current[house.id] = marker
-
-      if (isSelected) {
-        map.current.setView([house.lat, house.lng], 15)
-      }
+      markersRef.current[house.id] = marker
     })
+
+    if (selectedHousing) {
+      map.setView([selectedHousing.lat, selectedHousing.lng], 15)
+    } else if (!didFitRef.current && housingList.length) {
+      // Frame every perumahan on first paint — a fixed centre + zoom left the
+      // whole cluster in one corner on wide viewports.
+      didFitRef.current = true
+      map.fitBounds(
+        L.latLngBounds(housingList.map((h) => [h.lat, h.lng] as [number, number])),
+        { padding: [64, 64], maxZoom: 14 },
+      )
+    }
   }, [housingList, selectedHousing])
 
-  /**
-   * -------------------------------
-   *  EFFECTS
-   * -------------------------------
-   */
-
-  // Update housing markers when list or selected changes
+  // User location marker.
   useEffect(() => {
-    if (map.current) renderHousingMarkers()
-  }, [housingList, selectedHousing])
+    const map = mapRef.current
+    if (!map) return
 
-  // Update user marker
-  useEffect(() => {
-    if (map.current) renderUserLocation()
-  }, [userLocation])
+    userMarkerRef.current?.remove()
+    userMarkerRef.current = null
+    if (!userLocation) return
 
-  return <div ref={mapContainer} className="w-full h-full" />
+    userMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], {
+      icon: userIcon(),
+      title: userLocationLabel,
+      zIndexOffset: 1000,
+    })
+      .bindPopup(
+        `<div class="font-semibold text-sm">${userLocationLabel}</div>
+         <div class="text-coord" style="margin-top:4px;color:var(--muted-foreground)">${Math.abs(userLocation.lat).toFixed(4)}° ${userLocation.lat >= 0 ? coordLabels.north : coordLabels.south} · ${Math.abs(userLocation.lng).toFixed(4)}° ${userLocation.lng >= 0 ? coordLabels.east : coordLabels.west}</div>`,
+      )
+      .addTo(map)
+
+    map.setView([userLocation.lat, userLocation.lng], 14)
+  }, [userLocation, userLocationLabel, coordLabels])
+
+  return <div ref={containerRef} className="atlas-map h-full w-full" />
 }

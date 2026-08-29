@@ -1,6 +1,19 @@
-// Utility untuk menyimpan dan mengambil data perumahan dari localStorage
+// ARSIP — data seed 16 perumahan sebagaimana adanya sebelum migrasi ke Supabase.
+//
+// Berkas ini TIDAK LAGI menjadi sumber data aplikasi. Sumber kebenaran kini
+// public.housings di Supabase; seed yang setara dan versinya terjaga ada di
+// supabase/migrations/0004_seed_from_legacy.sql, yang dibangkitkan dari berkas
+// ini dan diverifikasi baris demi baris lewat legacy_id 1..16.
+//
+// Dipertahankan satu siklus rilis sebagai rujukan migrasi (PRD Lampiran C),
+// lalu dihapus. Tipe di bawah sengaja LOKAL dan bernama LegacyHousing: bentuk
+// runtime aplikasi adalah Housing di src/lib/housing.ts, dan keduanya sudah
+// berbeda (id number vs uuid, email wajib vs boleh kosong).
+//
+// Ketiga fungsi penyimpanan sisi browser sudah dihapus. Semuanya nol pemanggil
+// bahkan sebelum migrasi.
 
-export interface Housing {
+interface LegacyHousing {
   id: number
   name: string
   lat: number
@@ -29,9 +42,7 @@ export interface Housing {
 }
 
 
-const STORAGE_KEY = "housing_data"
-
-export const getInitialHousingData = (): Housing[] => [
+export const getInitialHousingData = (): LegacyHousing[] => [
   {
     id: 1,
     name: "Perumahan Innara Residence 2",
@@ -43,7 +54,7 @@ export const getInitialHousingData = (): Housing[] => [
     subsidiUnits: 8,
     priceRange: "Rp 166.000.000",
     image: "/kpr-assets/innara.jpg",
-    images:["/kpr-assets/innara.jpg", "/kpr-assets/al-falah.jpg", "/luxury-residence.jpg"],
+    images:["/kpr-assets/innara.jpg", "/kpr-assets/al-falah.jpg", "/kpr-assets/luxury.jpg"],
     contactPerson: "Ali Atin",
     phone: "0821-1234-5678",
     email: "info@greenvalley.com",
@@ -110,7 +121,7 @@ export const getInitialHousingData = (): Housing[] => [
     description: "Jalan Antara, Kelurahan Setia Negara, Kecamatan Siantar Sitalasari, Kota Pematang Siantar. no. - SUMATERA UTARA, KOTA PEMATANGSIANTAR, Siantar Sitalasari, Setia Negara",
     availableUnits: 60,
     priceRange: "Rp 166.000.000",
-    image: "/kpr-assets/puri.jpeg",
+    image: "/kpr-assets/puri.jpg",
     contactPerson: "Ali Atin",
     phone: "0821-2222-3333",
     email: "contact@harmonisent.com",
@@ -247,36 +258,3 @@ export const getInitialHousingData = (): Housing[] => [
   },
   
 ]
-
-export const loadHousingData = (): Housing[] => {
-  if (typeof window === "undefined") {
-    return getInitialHousingData()
-  }
-
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      return JSON.parse(stored)
-    }
-  } catch (error) {
-    console.error("Error loading housing data from localStorage:", error)
-  }
-
-  return getInitialHousingData()
-}
-
-export const saveHousingData = (data: Housing[]): void => {
-  if (typeof window === "undefined") return
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-  } catch (error) {
-    console.error("Error saving housing data to localStorage:", error)
-  }
-}
-
-export const resetHousingData = (): Housing[] => {
-  const initial = getInitialHousingData()
-  saveHousingData(initial)
-  return initial
-}

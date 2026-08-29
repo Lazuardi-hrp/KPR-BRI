@@ -8,6 +8,11 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Typography — single family, webekspor-style */
+  --font-sans: var(--font-jkt), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-jkt), ui-sans-serif, system-ui, sans-serif;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -26,6 +31,43 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* Brand */
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-sky: var(--brand-sky);
+  --color-brand-orange: var(--brand-orange);
+
+  /* ATLAS SIANTAR — ink ramp (dark surfaces) */
+  --color-ink: var(--ink);
+  --color-ink-deep: var(--ink-deep);
+  --color-mist-200: var(--mist-200);
+  --color-mist-400: var(--mist-400);
+
+  /* Accessible inks + tints of the brand accents */
+  --color-brand-orange-ink: var(--brand-orange-ink);
+  --color-brand-orange-fg: var(--brand-orange-fg);
+  --color-brand-orange-50: var(--brand-orange-50);
+  --color-brand-sky-ink: var(--brand-sky-ink);
+  --color-brand-sky-50: var(--brand-sky-50);
+
+  /* Semantic status */
+  --color-ok: var(--ok);
+  --color-ok-50: var(--ok-50);
+  --color-warn: var(--warn);
+  --color-warn-50: var(--warn-50);
+  --color-danger: var(--danger);
+  --color-danger-50: var(--danger-50);
+
+  /* Elevation scale */
+  --shadow-e1: var(--e1);
+  --shadow-e2: var(--e2);
+  --shadow-e3: var(--e3);
+  --shadow-e4: var(--e4);
+  --shadow-ink: var(--e-ink);
+  --shadow-glow-brand: var(--e-glow-brand);
+  --shadow-glow-orange: var(--e-glow-orange);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -42,38 +84,113 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --radius: 1.5rem;
+
+  --background: #ffffff;
+  --foreground: #0a1a2f;
+
+  --card: #ffffff;
+  --card-foreground: #0a1a2f;
+  --popover: #ffffff;
+  --popover-foreground: #0a1a2f;
+
+  /* BRI brand blue as primary */
+  --primary: #003d82;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f3f6fb;
+  --secondary-foreground: #0a1a2f;
+  --muted: #f3f6fb;
+  --muted-foreground: #55647a;
+  --accent: #eef4fc;
+  --accent-foreground: #003d82;
+
+  --destructive: #e5484d;
+  --border: #e6ecf4;
+  --input: #e6ecf4;
+  --ring: #003d82;
+
+  /* Brand tokens */
+  --brand: #003d82;
+  --brand-deep: #002a5c;
+  --brand-sky: #71c5e8;
+  --brand-orange: #ff8c42;
+
+  /* ── ATLAS SIANTAR ──────────────────────────────────────── *
+   * Every token below is a derived tint, shade or accessible  *
+   * ink of the frozen brand palette above — never a           *
+   * replacement. Contrast ratios are documented in design.md  *
+   * §9.1 and were verified against these exact hex values.    */
+
+  /* Ink ramp — dark surfaces */
+  --ink: #04203f;        /* was hardcoded in the footer + popup scrim */
+  --ink-deep: #021629;   /* deepest ground — footer */
+
+  /* Mist ramp — text on ink */
+  --mist-200: #c9d8ee;   /* body copy on ink — 11.33:1 */
+  --mist-400: #8fa9cd;   /* muted meta on ink — 6.80:1 */
+
+  /* Accessible inks of the brand accents, for SMALL TEXT on light */
+  --brand-orange-ink: #a8490a; /* 5.80:1 on white */
+  --brand-orange-fg: #3a1c00;  /* 6.75:1 on --brand-orange */
+  --brand-sky-ink: #0b6a8f;    /* 6.05:1 on white */
+
+  /* Accent tints */
+  --brand-orange-50: #fff3e9;
+  --brand-sky-50: #eaf6fb;
+
+  /* Semantic status — replaces the ad-hoc green/yellow/red trio */
+  --ok: #15803d;
+  --ok-50: #eaf6ee;
+  --warn: #8a5a00;
+  --warn-50: #fdf6e6;
+  --danger: #c0292e;
+  --danger-50: #fdeced;
+
+  /* Fluid type */
+  --fs-display-xl: clamp(2.75rem, 1.3rem + 6.4vw, 6.5rem);
+  --fs-display-l: clamp(2rem, 1.1rem + 4.2vw, 4.5rem);
+  --fs-display-m: clamp(1.625rem, 1.1rem + 2.4vw, 3rem);
+  --fs-display-s: clamp(1.25rem, 1.05rem + 0.9vw, 1.75rem);
+  --fs-title: clamp(1.0625rem, 1rem + 0.4vw, 1.25rem);
+  --fs-coord: 0.625rem;
+
+  /* Spacing rhythm */
+  --space-section: clamp(5rem, 8vw, 9rem);
+  --space-section-lg: clamp(6.5rem, 11vw, 12rem);
+  --space-block: clamp(2.5rem, 4vw, 4rem);
+  --gutter: clamp(1rem, 1.6vw, 1.5rem);
+
+  /* Easing & duration — CSS mirror of the Reveal curve */
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 180ms;
+  --dur-base: 320ms;
+  --dur-slow: 700ms;
+  --dur-hero: 800ms;
+
+  /* Elevation */
+  --e1: 0 1px 2px rgba(10, 26, 47, 0.04);
+  --e2: 0 1px 2px rgba(10, 26, 47, 0.04), 0 16px 40px -28px rgba(10, 26, 47, 0.14);
+  --e3: 0 2px 6px rgba(10, 26, 47, 0.05), 0 24px 50px -30px rgba(0, 61, 130, 0.24);
+  --e4: 0 6px 14px rgba(10, 26, 47, 0.06), 0 34px 66px -32px rgba(0, 61, 130, 0.34);
+  --e-ink: 0 24px 60px -28px rgba(0, 0, 0, 0.55);
+  --e-glow-brand: 0 10px 34px -12px rgba(0, 61, 130, 0.45);
+  --e-glow-orange: 0 10px 34px -12px rgba(255, 140, 66, 0.55);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0a1a2f;
+  --sidebar-primary: #003d82;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef4fc;
+  --sidebar-accent-foreground: #003d82;
+  --sidebar-border: #e6ecf4;
+  --sidebar-ring: #003d82;
 }
 
 .dark {
@@ -83,8 +200,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #4f9dff;
+  --primary-foreground: #04203f;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -94,20 +211,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --ring: #4f9dff;
 }
 
 @layer base {
@@ -116,5 +220,442 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
+  /* Lenis smooth-scroll base */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--brand) 22%, transparent);
+    color: var(--brand-deep);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ *  Display type helper
+ * ------------------------------------------------------------------ */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* ------------------------------------------------------------------ *
+ *  Paint highlight — bold marker stroke behind selected words
+ *
+ *  The gradient sits behind text (bottom 40% of line-height) and
+ *  never shifts layout. box-decoration-break ensures the highlight
+ *  clones correctly across wrapped lines.
+ * ------------------------------------------------------------------ */
+.paint-mark {
+  position: relative;
+  display: inline;
+  background-image: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--brand-orange) 38%, transparent),
+    color-mix(in srgb, var(--brand-orange) 38%, transparent)
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 36%;
+  background-position: 0 88%;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  padding-inline: 0.05em;
+  border-radius: 0.05em;
+}
+
+/* On ink (dark) surfaces, boost opacity so the mark reads well */
+[data-surface="ink"] .paint-mark,
+.paint-mark--on-dark {
+  background-image: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--brand-orange) 50%, transparent),
+    color-mix(in srgb, var(--brand-orange) 50%, transparent)
+  );
+}
+
+/* Coordinate micro-label — the signature element of ATLAS SIANTAR. */
+.text-coord {
+  font-size: var(--fs-coord);
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  line-height: 1;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+
+/* ------------------------------------------------------------------ *
+ *  Layout primitives
+ * ------------------------------------------------------------------ */
+
+/* Full-bleed escape hatch out of the max-w-7xl container. */
+.bleed {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+}
+
+/* Skip link — first focusable element on every page. */
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-160%);
+  transition: transform var(--dur-base) var(--ease-out-expo);
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* ------------------------------------------------------------------ *
+ *  Interaction primitives
+ * ------------------------------------------------------------------ */
+
+/* The single hover treatment: -4px lift, image to 1.05. */
+.lift {
+  transition:
+    transform var(--dur-base) var(--ease-out-expo),
+    box-shadow var(--dur-base) var(--ease-out-expo),
+    background-color var(--dur-base) var(--ease-out-expo),
+    border-color var(--dur-base) var(--ease-out-expo);
+}
+.lift:hover {
+  transform: translate3d(0, -4px, 0);
+}
+.lift .lift-img {
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+}
+.lift:hover .lift-img {
+  transform: scale(1.05);
+}
+
+/* Underline that draws in from the left. */
+.underline-draw {
+  position: relative;
+}
+.underline-draw::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -0.35rem;
+  height: 1.5px;
+  width: 100%;
+  background: var(--brand-orange);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-base) var(--ease-out-expo);
+}
+.underline-draw:hover::after,
+.underline-draw:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* ------------------------------------------------------------------ *
+ *  Above-the-fold entrance — CSS only
+ *
+ *  Hero content must not wait on hydration to become visible: a Framer
+ *  `initial: opacity 0` ships opacity:0 in the static HTML and pushes LCP out
+ *  to whenever JS lands. These run at first paint, with no JS at all, and the
+ *  global reduced-motion block collapses them to nothing.
+ * ------------------------------------------------------------------ */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise-in 620ms var(--ease-out-expo) both;
+}
+.rise-2 { animation-delay: 80ms; }
+.rise-3 { animation-delay: 160ms; }
+.rise-4 { animation-delay: 240ms; }
+.rise-5 { animation-delay: 320ms; }
+
+@keyframes word-rise {
+  from {
+    transform: translate3d(0, 110%, 0);
+  }
+  to {
+    transform: none;
+  }
+}
+.word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.word-mask > span {
+  display: inline-block;
+  animation: word-rise 800ms var(--ease-out-expo) both;
+}
+
+/* A location pinging — the signature motion of an atlas.
+   Capped at 3 concurrent instances per page (design.md §4.4). */
+@keyframes ping-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.55;
+  }
+  70%,
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+.marker-ping::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--brand-sky);
+  animation: ping-ring 2.4s var(--ease-out-expo) infinite;
+}
+
+/* ------------------------------------------------------------------ *
+ *  Ambient motion graphics
+ * ------------------------------------------------------------------ */
+@keyframes blob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(24px, -32px, 0) scale(1.12);
+  }
+  66% {
+    transform: translate3d(-28px, 18px, 0) scale(0.92);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes gradient-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-blob {
+  animation: blob 20s ease-in-out infinite;
+  will-change: transform;
+}
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+  will-change: transform;
+}
+.animate-marquee {
+  animation: marquee 34s linear infinite;
+  animation-play-state: running;
+}
+.marquee-host:hover .animate-marquee,
+.marquee-host:focus-within .animate-marquee {
+  animation-play-state: paused;
+}
+.animate-marquee[data-paused="true"] {
+  animation-play-state: paused;
+}
+.animate-gradient-pan {
+  background-size: 220% 220%;
+  animation: gradient-pan 12s ease infinite;
+}
+.animate-spin-slow {
+  animation: spin-slow 26s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-blob,
+  .animate-float,
+  .animate-marquee,
+  .animate-gradient-pan,
+  .animate-spin-slow {
+    animation: none !important;
+  }
+  .marker-ping::before {
+    animation: none !important;
+  }
+  .lift:hover {
+    transform: none !important;
+  }
+  .lift:hover .lift-img {
+    transform: none !important;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ *  Leaflet skin — the basemap desaturates so the brand markers are
+ *  the only saturated thing on screen. Leaflet's own stylesheet is
+ *  imported from npm in `housing-map.tsx`, not from a CDN.
+ * ------------------------------------------------------------------ */
+.atlas-map .leaflet-tile {
+  filter: saturate(0.55) contrast(1.05);
+}
+
+.atlas-map.leaflet-container {
+  background: var(--secondary);
+  font-family: var(--font-sans);
+}
+
+.atlas-map .leaflet-control-attribution {
+  background: rgb(255 255 255 / 0.8);
+  backdrop-filter: blur(4px);
+  border-top-left-radius: 0.5rem;
+  padding: 2px 8px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.atlas-map .leaflet-control-attribution a {
+  color: var(--brand);
+}
+
+/* Zoom controls: ≥44px touch targets, brand focus ring. */
+.atlas-map .leaflet-bar a {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+  color: var(--brand);
+  border-bottom-color: var(--border);
+  font-size: 18px;
+}
+.atlas-map .leaflet-bar a:hover {
+  background: var(--accent);
+  color: var(--brand-deep);
+}
+.atlas-map .leaflet-bar {
+  border: 1px solid var(--border);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  box-shadow: var(--e2);
+}
+
+/* Brand marker pins — inline SVG divIcons, zero external requests. */
+.atlas-marker {
+  background: none;
+  border: none;
+  filter: drop-shadow(0 6px 8px rgb(4 32 63 / 0.35));
+  transition: filter var(--dur-base) var(--ease-out-expo);
+}
+.atlas-marker-active {
+  filter: drop-shadow(0 10px 14px rgb(255 140 66 / 0.45));
+  z-index: 900 !important;
+}
+
+.atlas-map .leaflet-popup-content-wrapper {
+  border-radius: 0.875rem;
+  box-shadow: var(--e3);
+  border: 1px solid var(--border);
+}
+.atlas-map .leaflet-popup-content {
+  margin: 0.625rem 0.875rem;
+  font-family: var(--font-sans);
+}
+.atlas-map .leaflet-popup-tip {
+  border: 1px solid var(--border);
+}
+
+/* ------------------------------------------------------------------ *
+ *  Scroll-area styling — thin, subtle scrollbars for the sidebar
+ *  list and modal content. Never hides the scrollbar entirely so
+ *  scroll affordance is preserved.
+ * ------------------------------------------------------------------ */
+.sidebar-scroll-area,
+.modal-scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent;
+}
+.sidebar-scroll-area::-webkit-scrollbar,
+.modal-scroll-area::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-scroll-area::-webkit-scrollbar-track,
+.modal-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll-area::-webkit-scrollbar-thumb,
+.modal-scroll-area::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 9999px;
+}
+.sidebar-scroll-area::-webkit-scrollbar-thumb:hover,
+.modal-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--foreground) 30%, transparent);
+}
+
+/* iOS momentum scrolling */
+.sidebar-scroll-area,
+.modal-scroll-area {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
