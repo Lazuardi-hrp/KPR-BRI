@@ -2,7 +2,16 @@
 
 import Link from "next/link"
 import dynamic from "next/dynamic"
-import { ArrowRight, ArrowUpRight, Home, Shield, Percent, BadgeCheck, Phone } from "lucide-react"
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Home,
+  Shield,
+  Percent,
+  BadgeCheck,
+  Phone,
+  Calculator,
+} from "lucide-react"
 import { Button } from "../components/ui/button"
 import { Card } from "../components/ui/card"
 import { AnimatedCounter } from "../components/animated-counter"
@@ -75,7 +84,8 @@ export default function LandingView({
     { index: "01", label: t.chapters.benefits, href: "#keuntungan" },
     { index: "02", label: t.chapters.howItWorks, href: "#cara" },
     { index: "03", label: t.chapters.housing, href: "#perumahan" },
-    { index: "04", label: t.chapters.getStarted, href: "#mulai" },
+    { index: "04", label: t.chapters.simulation, href: "#simulasi" },
+    { index: "05", label: t.chapters.getStarted, href: "#mulai" },
   ]
 
   return (
@@ -332,11 +342,70 @@ export default function LandingView({
         </section>
 
         {/* ---------------------------------------------------------------- */}
-        {/* 04 · Mulai Hari Ini — ink, full-bleed                            */}
+        {/* 04 · Simulasi — white                                            */}
+        {/* ---------------------------------------------------------------- */}
+        {/*
+          Penggoda, bukan kalkulator kedua. Perhitungannya tinggal di satu
+          tempat (/simulasi); menaruh salinan ringkas di sini berarti dua
+          rumus yang bisa menyimpang, dan yang menyimpang adalah yang lebih
+          dulu dilihat orang.
+
+          Putih di antara dua blok ink mengembalikan irama INK · putih · INK
+          yang ditetapkan design.md §3.6.
+        */}
+        <section
+          id="simulasi"
+          aria-labelledby="bab-04"
+          className="bg-white px-4 py-[var(--space-section)] sm:px-6 lg:px-8"
+        >
+          <div className="mx-auto max-w-7xl">
+            <SectionHeader
+              index="04"
+              eyebrow={t.simulation.eyebrow}
+              titleId="bab-04"
+              title={<>{t.simulation.title}</>}
+              description={t.simulation.description}
+              align="split"
+            />
+
+            <Reveal>
+              <div className="mt-[var(--space-block)] grid gap-6 rounded-3xl border border-border bg-secondary p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                <ul className="grid gap-3 sm:grid-cols-3 lg:gap-6">
+                  {t.simulation.points.map((point) => (
+                    <li key={point} className="flex items-start gap-2.5">
+                      <Calculator
+                        className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                        aria-hidden
+                      />
+                      <span className="text-sm font-medium leading-snug text-foreground">
+                        {point}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Button asChild size="lg" className="w-full lg:w-auto">
+                  <Link href="/simulasi">
+                    {t.simulation.cta}
+                    <ArrowRight />
+                  </Link>
+                </Button>
+              </div>
+            </Reveal>
+
+            {/* Terlihat tanpa interaksi, sebagaimana disyaratkan. */}
+            <p className="mt-4 max-w-3xl text-xs leading-relaxed text-muted-foreground">
+              {t.simulation.disclaimer}
+            </p>
+          </div>
+        </section>
+
+        {/* ---------------------------------------------------------------- */}
+        {/* 05 · Mulai Hari Ini — ink, full-bleed                            */}
         {/* ---------------------------------------------------------------- */}
         <section
           id="mulai"
-          aria-labelledby="bab-04"
+          aria-labelledby="bab-05"
           data-surface="ink"
           className="bg-ink px-4 py-[var(--space-section-lg)] sm:px-6 lg:px-8"
         >
@@ -350,7 +419,7 @@ export default function LandingView({
             </Reveal>
 
             <h2
-              id="bab-04"
+              id="bab-05"
               className="font-display mx-auto mt-6 max-w-[16ch] text-[length:var(--fs-display-xl)] font-extrabold leading-[0.94] tracking-[-0.035em] text-white"
             >
               <WordsReveal text={t.cta.realizeWord} stagger={0.055} />{" "}

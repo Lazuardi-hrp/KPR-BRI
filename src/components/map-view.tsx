@@ -7,6 +7,7 @@ import Image from "next/image"
 import { MapPin, ChevronLeft, List, X, Loader2, Search } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Coord } from "@/components/coord"
+import VerificationChip from "./verification-chip"
 import HousingPopup from "@/components/housing-popup"
 import NearestHousingPanel from "@/components/nearest-housing-panel"
 import { useTranslation } from "@/lib/i18n"
@@ -258,6 +259,11 @@ export default function MapView({ housingList }: { housingList: Housing[] }) {
                             {housing.priceRange}
                           </span>
                         </div>
+                        <VerificationChip
+                          status={housing.verificationStatus}
+                          verifiedAt={housing.verifiedAt}
+                          className="mt-2"
+                        />
                       </div>
                     </div>
                   </Card>

@@ -5,6 +5,22 @@ const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
   : undefined
 
 /**
+ * Turnstile menuntut TIGA izin sekaligus, dan melewatkan salah satunya
+ * membuatnya gagal tanpa suara: skripnya, iframe tempat tantangan digambar,
+ * dan koneksi balik ke Cloudflare. Tanpa frame-src khususnya, iframe-nya jatuh
+ * ke `default-src 'self'` dan kotak verifikasi tidak pernah muncul — pengguna
+ * sah yang tertandai mencurigakan akan terjebak permanen tanpa jalan keluar,
+ * karena satu-satunya cara melanjutkan justru yang diblokir.
+ *
+ * Host-nya hanya ditambahkan bila Turnstile memang dikonfigurasi, mengikuti
+ * cara supabaseHost diperlakukan di atas: pemasangan tanpa Turnstile tidak
+ * mengumumkan pihak ketiga yang tidak pernah dihubunginya.
+ */
+const turnstileHost = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  ? "https://challenges.cloudflare.com"
+  : ""
+
+/**
  * CSP (PRD §9.4).
  *
  * `script-src` HARUS ditulis eksplisit dengan 'unsafe-inline'. Menghilangkannya
@@ -31,14 +47,19 @@ const csp = [
   // 'wasm-unsafe-eval' dibutuhkan dekoder meshopt pada hero 3D
   // (public/models/*.glb dioptimalkan dengan meshopt, dekodernya WebAssembly).
   // Ini izin sempit khusus WASM — TIDAK membuka eval() umum.
-  "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://va.vercel-scripts.com",
+  // 'unsafe-eval' dibutuhkan React di development mode untuk fitur debugging
+  // seperti rekonstruksi callstack. TIDAK diikutkan di production.
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://va.vercel-scripts.com${turnstileHost ? ` ${turnstileHost}` : ""}`,
   `img-src 'self' data: blob: https://*.tile.openstreetmap.org${supabaseHost ? ` https://${supabaseHost}` : ""}`,
   // blob: dibutuhkan loader GLTF/meshopt hero 3D (membuat object URL untuk
   // worker dan buffer geometri).
-  `connect-src 'self' blob: https://va.vercel-scripts.com${supabaseHost ? ` https://${supabaseHost} wss://${supabaseHost}` : ""}`,
+  `connect-src 'self' blob: https://va.vercel-scripts.com${supabaseHost ? ` https://${supabaseHost} wss://${supabaseHost}` : ""}${turnstileHost ? ` ${turnstileHost}` : ""}`,
   "style-src 'self' 'unsafe-inline'", // Tailwind + style inline Leaflet
   "font-src 'self' data:",
   "worker-src 'self' blob:",
+  // Tanpa arahan ini, frame apa pun jatuh ke default-src 'self'. Widget
+  // Turnstile adalah iframe lintas-asal, jadi ia harus disebut eksplisit.
+  `frame-src 'self'${turnstileHost ? ` ${turnstileHost}` : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

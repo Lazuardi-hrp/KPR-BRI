@@ -6,6 +6,7 @@ import { MapPin, ArrowUpRight } from "lucide-react"
 import { blurFor } from "../lib/image-blur"
 import { RevealGroup, RevealItem } from "./motion/reveal"
 import { Coord } from "./coord"
+import VerificationChip from "./verification-chip"
 import { useTranslation } from "../lib/i18n"
 import type { Housing } from "../lib/housing"
 
@@ -66,6 +67,12 @@ export function PerumahanCollection({
                 {h.name}
               </h3>
               <Coord lat={h.lat} lng={h.lng} as="div" className="mt-2 text-mist-400" />
+              <VerificationChip
+                status={h.verificationStatus}
+                verifiedAt={h.verifiedAt}
+                onDark
+                className="mt-2.5"
+              />
               <p className="mt-2 flex items-start gap-1.5 text-sm text-mist-400">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-sky" />
                 <span className="line-clamp-1">{shortLocation(h.description)}</span>

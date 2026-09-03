@@ -81,6 +81,7 @@ export const id: Translations = {
     benefits: "Keuntungan",
     howItWorks: "Cara Kerja",
     housing: "Perumahan",
+    simulation: "Simulasi",
     getStarted: "Mulai",
   },
 
@@ -135,7 +136,23 @@ export const id: Translations = {
     viewAllOnMap: "Lihat semua di peta",
   },
 
-  // ── Section 04 – CTA ───────────────────────────────────────────────────
+  // ── Section 04 – Simulation teaser ─────────────────────────────────────
+  simulation: {
+    eyebrow: "Simulasi",
+    title: "Perkirakan angsuran dan anggaran rumah Anda",
+    description:
+      "Masukkan penghasilan dan cicilan yang sedang berjalan, lalu lihat perkiraan angsuran bulanan, porsinya terhadap penghasilan, dan perumahan yang harganya masuk anggaran Anda.",
+    cta: "Buka simulasi",
+    disclaimer:
+      "Seluruh hasil bersifat estimasi berdasarkan angka yang Anda isikan sendiri — bukan penawaran, bukan pengajuan, dan bukan persetujuan kredit BRI.",
+    points: [
+      "Angsuran bulanan dan total bunga",
+      "Porsi angsuran terhadap penghasilan",
+      "Perumahan yang sesuai anggaran",
+    ],
+  },
+
+  // ── Section 05 – CTA ───────────────────────────────────────────────────
   cta: {
     eyebrow: "04 · Mulai Hari Ini",
     realizeWord: "Wujudkan",
@@ -153,8 +170,6 @@ export const id: Translations = {
   footer: {
     tagline:
       "Solusi KPR bersubsidi terpercaya untuk mewujudkan rumah impian keluarga Indonesia.",
-    navigation: "Navigasi",
-    housingMap: "Peta Perumahan",
     contact: "Kontak",
     serviceArea: "Wilayah Layanan",
     city: "Kota Pematangsiantar & Kabupaten Simalungun",
@@ -215,6 +230,56 @@ export const id: Translations = {
     contactAgent: "Hubungi Agen Penjualan",
     salesAgent: "Agen Penjualan",
     callNow: "Hubungi Sekarang",
+  },
+
+  // ── Property Verification ──────────────────────────────────────────────
+  verification: {
+    verified: "Properti Terverifikasi",
+    pending: "Verifikasi Diproses",
+    needsUpdate: "Informasi Perlu Pembaruan",
+    shortVerified: "Terverifikasi",
+    shortPending: "Belum diverifikasi",
+    shortNeedsUpdate: "Perlu pembaruan",
+    verifiedNote:
+      "Informasi properti ini telah diperiksa petugas dan dinilai masih berlaku.",
+    pendingNote:
+      "Properti ini terdaftar di sistem, tetapi informasinya belum selesai diperiksa petugas.",
+    needsUpdateNote:
+      "Sebagian informasi berubah atau belum sempat dipastikan, dan sedang menunggu peninjauan.",
+
+    lastVerified: "Diverifikasi {time}",
+    lastUpdated: "Data diperbarui {time}",
+    neverVerified: "Belum pernah diverifikasi",
+    staleWarning:
+      "Pemeriksaan terakhir sudah cukup lama. Sebaiknya pastikan kembali ke pihak pemasaran sebelum mengambil keputusan.",
+
+    detailsTitle: "Status informasi properti",
+    showDetails: "Lihat rincian",
+    hideDetails: "Tutup rincian",
+
+    fieldVerified: "Terverifikasi",
+    fieldChecked: "Terakhir dicek {time}",
+    fieldUnchecked: "Belum diperiksa",
+    fieldMissing: "Belum ada data",
+
+    confidence: "Keandalan Informasi",
+    outOf: "dari 100",
+    bandExcellent: "Sangat baik",
+    bandGood: "Baik",
+    bandFair: "Cukup",
+    bandAttention: "Perlu perhatian",
+    confidenceNote:
+      "Angka ini menilai kelengkapan dan kebaruan informasi, bukan mutu properti atau kelayakan kreditnya.",
+
+    fields: {
+      nama: "Nama properti",
+      harga: "Harga properti",
+      lokasi: "Lokasi properti",
+      pengembang: "Pengembang",
+      foto: "Foto properti",
+      kontak: "Informasi kontak",
+      ketersediaan_unit: "Ketersediaan unit",
+    },
   },
 
   // ── Image Slideshow ────────────────────────────────────────────────────

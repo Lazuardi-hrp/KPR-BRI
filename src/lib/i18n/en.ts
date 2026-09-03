@@ -81,6 +81,7 @@ export const en: Translations = {
     benefits: "Benefits",
     howItWorks: "How It Works",
     housing: "Housing",
+    simulation: "Simulation",
     getStarted: "Get Started",
   },
 
@@ -135,7 +136,23 @@ export const en: Translations = {
     viewAllOnMap: "View all on map",
   },
 
-  // ── Section 04 – CTA ───────────────────────────────────────────────────
+  // ── Section 04 – Simulation teaser ─────────────────────────────────────
+  simulation: {
+    eyebrow: "Simulation",
+    title: "Estimate your instalment and housing budget",
+    description:
+      "Enter your income and current monthly commitments, then see your estimated monthly instalment, how much of your income it takes, and which housing fits your budget.",
+    cta: "Open the simulator",
+    disclaimer:
+      "All results are estimates based on figures you enter yourself — not an offer, not an application, and not credit approval from BRI.",
+    points: [
+      "Monthly instalment and total interest",
+      "Share of your monthly income",
+      "Housing that fits your budget",
+    ],
+  },
+
+  // ── Section 05 – CTA ───────────────────────────────────────────────────
   cta: {
     eyebrow: "04 · Get Started Today",
     realizeWord: "Realize",
@@ -153,8 +170,6 @@ export const en: Translations = {
   footer: {
     tagline:
       "Trusted subsidized mortgage solution to make Indonesian families' dream homes a reality.",
-    navigation: "Navigation",
-    housingMap: "Housing Map",
     contact: "Contact",
     serviceArea: "Service Area",
     city: "Pematangsiantar City & Simalungun Regency",
@@ -215,6 +230,56 @@ export const en: Translations = {
     contactAgent: "Contact Sales Agent",
     salesAgent: "Sales Agent",
     callNow: "Call Now",
+  },
+
+  // ── Property Verification ──────────────────────────────────────────────
+  verification: {
+    verified: "Verified Property",
+    pending: "Verification In Progress",
+    needsUpdate: "Information Needs Update",
+    shortVerified: "Verified",
+    shortPending: "Not yet verified",
+    shortNeedsUpdate: "Needs update",
+    verifiedNote:
+      "This property's information has been reviewed by our staff and is considered current.",
+    pendingNote:
+      "This property is listed in our system, but its information has not finished review yet.",
+    needsUpdateNote:
+      "Some information has changed or is not yet confirmed, and is awaiting review.",
+
+    lastVerified: "Verified {time}",
+    lastUpdated: "Data updated {time}",
+    neverVerified: "Never verified",
+    staleWarning:
+      "The last review was a while ago. Please confirm with the marketing contact before making a decision.",
+
+    detailsTitle: "Property information status",
+    showDetails: "See details",
+    hideDetails: "Hide details",
+
+    fieldVerified: "Verified",
+    fieldChecked: "Last checked {time}",
+    fieldUnchecked: "Not yet checked",
+    fieldMissing: "No data yet",
+
+    confidence: "Information Confidence",
+    outOf: "out of 100",
+    bandExcellent: "Excellent",
+    bandGood: "Good",
+    bandFair: "Fair",
+    bandAttention: "Needs attention",
+    confidenceNote:
+      "This score reflects how complete and how recent the information is \u2014 not the quality of the property or its credit eligibility.",
+
+    fields: {
+      nama: "Property name",
+      harga: "Property price",
+      lokasi: "Property location",
+      pengembang: "Developer",
+      foto: "Property images",
+      kontak: "Contact information",
+      ketersediaan_unit: "Unit availability",
+    },
   },
 
   // ── Image Slideshow ────────────────────────────────────────────────────

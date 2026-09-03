@@ -78,6 +78,7 @@ export interface Translations {
     benefits: string
     howItWorks: string
     housing: string
+    simulation: string
     getStarted: string
   }
 
@@ -112,7 +113,18 @@ export interface Translations {
     viewAllOnMap: string
   }
 
-  // ── Section 04 – CTA ───────────────────────────────────────────────────
+  // ── Section 04 – Simulation teaser ─────────────────────────────────────
+  simulation: {
+    eyebrow: string
+    title: string
+    description: string
+    cta: string
+    /** Wajib terlihat, tidak boleh di balik tooltip — design.md §7.3. */
+    disclaimer: string
+    points: string[]
+  }
+
+  // ── Section 05 – CTA ───────────────────────────────────────────────────
   cta: {
     eyebrow: string
     realizeWord: string
@@ -129,8 +141,6 @@ export interface Translations {
   // ── Footer ─────────────────────────────────────────────────────────────
   footer: {
     tagline: string
-    navigation: string
-    housingMap: string
     contact: string
     serviceArea: string
     city: string
@@ -191,6 +201,59 @@ export interface Translations {
     contactAgent: string
     salesAgent: string
     callNow: string
+  }
+
+  // ── Property Verification ──────────────────────────────────────────────
+  verification: {
+    /** Status headline shown on the badge itself. */
+    verified: string
+    pending: string
+    needsUpdate: string
+    /** Card-sized labels. The full ones do not fit a listing card. */
+    shortVerified: string
+    shortPending: string
+    shortNeedsUpdate: string
+    /** One-line explanation under each headline. */
+    verifiedNote: string
+    pendingNote: string
+    needsUpdateNote: string
+
+    /** Freshness line. "{time}" is replaced with a relative time. */
+    lastVerified: string      // "Last verified {time}"
+    lastUpdated: string       // "Data last updated {time}"
+    neverVerified: string
+    staleWarning: string      // shown past the freshness window
+
+    /** Disclosure. */
+    detailsTitle: string
+    showDetails: string
+    hideDetails: string
+
+    /** Per-field breakdown. */
+    fieldVerified: string
+    fieldChecked: string      // "Last checked {time}"
+    fieldUnchecked: string
+    fieldMissing: string
+
+    /** Confidence score. */
+    confidence: string
+    outOf: string             // "{score} / 100"
+    bandExcellent: string
+    bandGood: string
+    bandFair: string
+    bandAttention: string
+    confidenceNote: string
+
+    /** Field names — must mirror LABEL_BIDANG in src/lib/verification.ts. */
+    fields: {
+      nama: string
+      harga: string
+      lokasi: string
+      pengembang: string
+      foto: string
+      kontak: string
+      ketersediaan_unit: string
+    }
   }
 
   // ── Image Slideshow ────────────────────────────────────────────────────

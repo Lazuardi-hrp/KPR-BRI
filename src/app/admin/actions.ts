@@ -6,6 +6,9 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { getSesiStaf } from "@/lib/auth"
 import { HousingSchema, ContactSchema } from "@/lib/schemas/housing"
+import type { Database } from "@/lib/database.types"
+
+type StatusProspek = Database["public"]["Enums"]["lead_status"]
 
 export type Hasil = { ok: true; id?: string } | { ok: false; error: string }
 
@@ -205,9 +208,33 @@ export async function simpanKontak(housingId: string, formData: FormData): Promi
 
 // ─────────────────────────── Prospek ───────────────────────────
 
+/**
+ * Memindahkan prospek ke tahap berikutnya.
+ *
+ * contacted_at dan closed_at TIDAK disetel di sini: trigger leads_log_status
+ * yang mengurusnya, sekaligus menulis riwayat. Kalau kedua tempat sama-sama
+ * menulis, keduanya akan berbeda cepat atau lambat — dan yang di basis data
+ * berlaku juga untuk perubahan lewat SQL langsung.
+ */
 export async function ubahStatusProspek(
   leadId: string,
-  status: "baru" | "dihubungi" | "diproses" | "selesai" | "batal",
+  status: StatusProspek,
+): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from("leads").update({ status }).eq("id", leadId)
+
+  if (error) return { ok: false, error: pesanGalat(error) }
+  segarkanProspek(leadId)
+  return { ok: true, id: leadId }
+}
+
+/** Menugaskan prospek ke seorang petugas, atau melepaskannya bila null. */
+export async function tugaskanProspek(
+  leadId: string,
+  petugasId: string | null,
 ): Promise<Hasil> {
   const sesi = await stafAtauGagal()
   if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
@@ -215,17 +242,11 @@ export async function ubahStatusProspek(
   const supabase = await createClient()
   const { error } = await supabase
     .from("leads")
-    .update({
-      status,
-      ...(status === "dihubungi" ? { contacted_at: new Date().toISOString() } : {}),
-      ...(status === "selesai" || status === "batal"
-        ? { closed_at: new Date().toISOString() }
-        : {}),
-    })
+    .update({ assigned_to: petugasId })
     .eq("id", leadId)
 
   if (error) return { ok: false, error: pesanGalat(error) }
-  revalidatePath("/admin/prospek")
+  segarkanProspek(leadId)
   return { ok: true, id: leadId }
 }
 
@@ -242,8 +263,231 @@ export async function tambahCatatanProspek(leadId: string, body: string): Promis
     .insert({ lead_id: leadId, body: isi, author_id: sesi.userId })
 
   if (error) return { ok: false, error: pesanGalat(error) }
-  revalidatePath("/admin/prospek")
+  segarkanProspek(leadId)
   return { ok: true, id: leadId }
+}
+
+function segarkanProspek(leadId: string) {
+  revalidatePath("/admin/prospek")
+  revalidatePath(`/admin/prospek/${leadId}`)
+  revalidatePath("/admin")
+}
+
+function segarkanVerifikasi(housingId: string) {
+  revalidatePath("/admin/verifikasi")
+  revalidatePath(`/admin/verifikasi/${housingId}`)
+  revalidatePath("/admin")
+}
+
+// ─────────────────────────── Verifikasi ───────────────────────────
+
+/**
+ * Mencatat satu peristiwa verifikasi.
+ *
+ * Seluruh logikanya — status apa yang dihasilkan, kapan tinjau ulang, siapa
+ * pemeriksanya — ada di RPC verify_housing. Fungsi ini hanya menyalurkan
+ * masukan dan menerjemahkan galatnya. Menaruh aturan "terverifikasi butuh
+ * semua bidang" di sini akan menciptakan salinan kedua yang bisa menyimpang
+ * dari yang ditegakkan basis data.
+ */
+export async function verifikasiPerumahan(
+  housingId: string,
+  bidang: string[],
+  catatan: string,
+  hariTinjauUlang: number,
+): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
+
+  if (bidang.length === 0) {
+    return { ok: false, error: "Centang minimal satu bidang yang Anda periksa." }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc("verify_housing", {
+    p_housing_id: housingId,
+    p_checked: bidang,
+    p_note: catatan.trim() || undefined,
+    p_review_days: hariTinjauUlang,
+  })
+
+  if (error) {
+    if (error.code === "P0002") return { ok: false, error: "Perumahan tidak ditemukan." }
+    return { ok: false, error: pesanGalat(error) }
+  }
+
+  segarkan()
+  segarkanVerifikasi(housingId)
+  return { ok: true, id: housingId }
+}
+
+/**
+ * Menandai properti perlu pembaruan, sebagai TINDAKAN yang tercatat.
+ *
+ * Tanpa ini, satu-satunya cara petugas menyatakan "data ini meragukan" adalah
+ * memverifikasi sebagian — yang menghasilkan status sama tetapi meninggalkan
+ * catatan palsu bahwa bidang-bidang tertentu sudah diperiksa. mark_needs_update
+ * menulis peristiwa dengan checked kosong, jadi lini masa riwayat menunjukkan
+ * siapa yang menandai dan kenapa.
+ *
+ * Catatan wajib: penanda tanpa alasan hanya memindahkan pertanyaannya ke
+ * petugas berikutnya.
+ */
+export async function tandaiPerluPembaruan(
+  housingId: string,
+  catatan: string,
+): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
+
+  const isi = catatan.trim()
+  if (isi.length < 5) {
+    return { ok: false, error: "Tuliskan alasannya, minimal beberapa kata." }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc("mark_needs_update", {
+    p_housing_id: housingId,
+    p_note: isi,
+  })
+
+  if (error) {
+    if (error.code === "P0002") return { ok: false, error: "Perumahan tidak ditemukan." }
+    return { ok: false, error: pesanGalat(error) }
+  }
+
+  segarkan()
+  segarkanVerifikasi(housingId)
+  return { ok: true, id: housingId }
+}
+
+// ─────────────────────────── Notifikasi ───────────────────────────
+
+export async function tandaiNotifikasiDibaca(id: string): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("admin_notifications")
+    .update({ read_at: new Date().toISOString(), read_by: sesi.userId })
+    .eq("id", id)
+
+  if (error) return { ok: false, error: pesanGalat(error) }
+  revalidatePath("/admin", "layout")
+  return { ok: true, id }
+}
+
+export async function tandaiSemuaNotifikasiDibaca(): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("admin_notifications")
+    .update({ read_at: new Date().toISOString(), read_by: sesi.userId })
+    .is("read_at", null)
+
+  if (error) return { ok: false, error: pesanGalat(error) }
+  revalidatePath("/admin", "layout")
+  return { ok: true }
+}
+
+// ─────────────────────────── Keamanan ───────────────────────────
+
+/**
+ * Blokir manual selalu bertanggal.
+ *
+ * Blokir permanen atas hash IP adalah cara pasti menghukum orang yang salah:
+ * alamat IP berpindah tangan, dan satu NAT operator seluler bisa mewakili
+ * ribuan calon pembeli yang sah. Batas 30 hari memaksa peninjauan ulang.
+ */
+export async function blokirIdentitas(
+  ipHash: string,
+  alasan: string,
+  jam: number,
+): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi || sesi.role !== "admin") {
+    return { ok: false, error: "Hanya admin yang boleh memblokir." }
+  }
+
+  const durasi = Math.min(Math.max(Math.round(jam) || 6, 1), 24 * 30)
+  const supabase = await createClient()
+  const { error } = await supabase.from("blocked_identities").upsert(
+    {
+      ip_hash: ipHash,
+      reason: alasan.trim() || "Diblokir manual oleh admin",
+      blocked_until: new Date(Date.now() + durasi * 3_600_000).toISOString(),
+      created_by: sesi.userId,
+      is_manual: true,
+    },
+    { onConflict: "ip_hash" },
+  )
+
+  if (error) return { ok: false, error: pesanGalat(error) }
+  revalidatePath("/admin/keamanan")
+  return { ok: true }
+}
+
+export async function bukaBlokirIdentitas(ipHash: string): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi || sesi.role !== "admin") {
+    return { ok: false, error: "Hanya admin yang boleh membuka blokir." }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from("blocked_identities").delete().eq("ip_hash", ipHash)
+
+  if (error) return { ok: false, error: pesanGalat(error) }
+  revalidatePath("/admin/keamanan")
+  return { ok: true }
+}
+
+/**
+ * Menandai satu temuan keamanan sudah ditangani, atau membukanya kembali.
+ *
+ * Siapa yang menandai diisi basis data dari auth.uid(), bukan dikirim dari
+ * sini. Bila aplikasi yang menentukannya, satu admin bisa menandai temuan
+ * atas nama admin lain — dan jejak audit yang berbohong lebih buruk daripada
+ * tidak ada jejak sama sekali.
+ */
+export async function tandaiPeristiwaSelesai(id: number, selesai = true): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi || sesi.role !== "admin") {
+    return { ok: false, error: "Hanya admin yang boleh menutup temuan keamanan." }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc("resolve_abuse_event", {
+    p_id: id,
+    p_selesai: selesai,
+  })
+
+  if (error) return { ok: false, error: pesanGalat(error) }
+  revalidatePath("/admin/keamanan")
+  return { ok: true }
+}
+
+/** Menandai satu peringatan lonjakan sudah ditinjau. */
+export async function tandaiLonjakanSelesai(id: number, selesai = true): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi || sesi.role !== "admin") {
+    return { ok: false, error: "Hanya admin yang boleh menutup peringatan." }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("security_alerts")
+    .update({
+      resolved_at: selesai ? new Date().toISOString() : null,
+      resolved_by: selesai ? sesi.userId : null,
+    })
+    .eq("id", id)
+
+  if (error) return { ok: false, error: pesanGalat(error) }
+  revalidatePath("/admin/keamanan")
+  return { ok: true }
 }
 
 // ─────────────────────────── Sesi ───────────────────────────

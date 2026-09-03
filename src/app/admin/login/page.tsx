@@ -9,7 +9,7 @@ import { motion } from "motion/react"
 import { AlertCircle, ArrowLeft, Eye, EyeOff, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { createClient } from "@/lib/supabase/client"
+import { masukAdmin } from "@/app/actions/auth"
 
 /**
  * Login admin lewat Supabase Auth.
@@ -19,6 +19,11 @@ import { createClient } from "@/lib/supabase/client"
  * dua baris yang bisa dipalsukan siapa pun dari konsol browser. Kini kredensial
  * diverifikasi server Auth, sesi disimpan di cookie httpOnly, dan otorisasi
  * sebenarnya ditegakkan RLS di basis data.
+ *
+ * Pengiriman formulirnya sendiri melewati Server Action, bukan memanggil
+ * signInWithPassword() dari browser. Alasannya keamanan, bukan gaya: hanya di
+ * server percobaan yang gagal bisa dihitung, dicatat, dan akhirnya diblokir.
+ * Lihat masukAdmin() di app/actions/auth.ts.
  *
  * Dipisah dari default export supaya useSearchParams() bisa dibungkus Suspense.
  * Sejak halaman ini keluar dari layout admin (route group `(secure)`), ia
@@ -39,39 +44,23 @@ function FormLogin() {
     setError("")
     setIsLoading(true)
 
-    const supabase = createClient()
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    })
+    const fd = new FormData()
+    fd.set("email", email.trim())
+    fd.set("password", password)
+    fd.set("lanjut", searchParams.get("lanjut") ?? "")
 
-    if (authError || !data.user) {
-      // Pesan sengaja tidak membedakan "email tidak terdaftar" dari "kata sandi
-      // salah" — membedakannya memberi tahu penyerang alamat mana yang valid.
-      setError("Email atau kata sandi tidak sesuai.")
+    const hasil = await masukAdmin(fd)
+
+    if (!hasil.ok) {
+      setError(hasil.error)
       setPassword("")
       setIsLoading(false)
       return
     }
 
-    // Punya akun bukan berarti punya akses. Peran bawaan setiap akun baru
-    // adalah 'viewer'; kenaikan ke admin/pengembang dilakukan manual.
-    const { data: profil } = await supabase
-      .from("profiles")
-      .select("role, is_active")
-      .eq("id", data.user.id)
-      .maybeSingle()
-
-    if (!profil?.is_active || (profil.role !== "admin" && profil.role !== "pengembang")) {
-      await supabase.auth.signOut()
-      setError("Akun ini belum diberi akses ke dashboard. Hubungi administrator.")
-      setPassword("")
-      setIsLoading(false)
-      return
-    }
-
-    const lanjut = searchParams.get("lanjut")
-    router.push(lanjut && lanjut.startsWith("/admin") ? lanjut : "/admin")
+    // Cookie sesi sudah disetel oleh Server Action; refresh() membuat
+    // middleware dan layout admin membacanya pada navigasi berikutnya.
+    router.push(hasil.tujuan)
     router.refresh()
   }
 

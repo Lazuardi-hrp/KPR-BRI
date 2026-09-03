@@ -20,7 +20,7 @@ export function SiteFooter({ items }: { items: Housing[] }) {
 
       <div className="px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-4">
+          <div className="mb-12 grid grid-cols-2 gap-8 md:grid-cols-3">
             <div className="col-span-2 md:col-span-1">
               <div className="relative mb-4 h-12 w-28">
                 <Image
@@ -34,27 +34,6 @@ export function SiteFooter({ items }: { items: Housing[] }) {
               <p className="max-w-xs text-sm leading-relaxed text-mist-200">
                 {t.footer.tagline}
               </p>
-            </div>
-
-            <div>
-              <h2 className="text-coord mb-5 text-brand-orange">{t.footer.navigation}</h2>
-              <ul className="space-y-3 text-sm text-mist-200">
-                <li>
-                  <Link href="/map" className="underline-draw inline-block hover:text-white">
-                    {t.footer.housingMap}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#keuntungan" className="underline-draw inline-block hover:text-white">
-                    {t.chapters.benefits}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/admin/login" className="underline-draw inline-block hover:text-white">
-                    Admin
-                  </Link>
-                </li>
-              </ul>
             </div>
 
             <div>

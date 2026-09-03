@@ -5,9 +5,12 @@ import type { Metadata } from "next"
 import { ArrowLeft, MapPin, Phone, User } from "lucide-react"
 
 import { getHousingBySlug, getPublishedHousings } from "@/lib/queries/housings"
+import { getKonfigKPR } from "@/lib/queries/kpr"
 import { blurFor } from "@/lib/image-blur"
 import { Coord } from "@/components/coord"
-import LeadForm from "@/components/lead-form"
+import KprPanel from "@/components/kpr-panel"
+import TrustPanel from "@/components/trust-panel"
+import WhatsAppCta from "@/components/whatsapp-cta"
 
 export const revalidate = 300
 
@@ -38,6 +41,11 @@ export default async function DetailPerumahan({
   const { slug } = await params
   const h = await getHousingBySlug(slug)
   if (!h) notFound()
+
+  // Bunga yang berlaku dibaca sekali di sini dan diturunkan ke panel, sehingga
+  // sidebar ini dan /simulasi tidak mungkin menampilkan dua angka berbeda
+  // untuk perumahan yang sama.
+  const konfig = await getKonfigKPR()
 
   const persen = h.availabilityPercent
   const spesifikasi = [
@@ -70,6 +78,12 @@ export default async function DetailPerumahan({
             {h.description}
           </p>
         </header>
+
+        {/* Status verifikasi mendahului foto dan harga: itu yang menentukan
+            seberapa jauh angka di bawahnya pantas dipercaya. */}
+        <div className="mt-6">
+          <TrustPanel housing={h} />
+        </div>
 
         {h.image && (
           <div className="mt-8 overflow-hidden rounded-3xl border border-border">
@@ -146,12 +160,21 @@ export default async function DetailPerumahan({
                     </p>
                   )}
                   {h.phone && (
-                    <p className="flex items-center gap-2.5">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${h.phone}`} className="numeric text-primary hover:underline">
-                        {h.phone}
-                      </a>
-                    </p>
+                    <>
+                      <p className="flex items-center gap-2.5">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <a href={`tel:${h.phone}`} className="numeric text-primary hover:underline">
+                          {h.phone}
+                        </a>
+                      </p>
+                      <div className="pt-2">
+                        <WhatsAppCta
+                          housingId={h.id}
+                          housingName={h.name}
+                          phone={h.phone}
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
               </section>
@@ -164,10 +187,19 @@ export default async function DetailPerumahan({
                 Tertarik dengan perumahan ini?
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Tinggalkan nama dan nomor telepon, petugas akan menghubungi Anda.
+                Hitung perkiraan angsuran, lalu tinggalkan nomor Anda — petugas
+                akan menghubungi.
               </p>
               <div className="mt-5">
-                <LeadForm housingId={h.id} housingName={h.name} />
+                <KprPanel
+                  housingId={h.id}
+                  housingName={h.name}
+                  priceMin={h.priceMin ?? null}
+                  housingSlug={h.slug}
+                  konfig={konfig.skema}
+                  ditinjauPada={konfig.ditinjauPada}
+                  turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                />
               </div>
               <p className="mt-4 text-center text-xs text-muted-foreground">
                 <Link href="/kebijakan-privasi" className="underline hover:text-foreground">

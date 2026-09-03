@@ -1,5 +1,7 @@
 import "server-only"
 
+import { cache } from "react"
+
 import { createAnonClient } from "@/lib/supabase/anon"
 import { toHousing, type Housing, type HousingPublicRow } from "@/lib/housing"
 
@@ -12,8 +14,20 @@ const KOLOM = `
   roof_type, wall_type, foundation_type,
   building_area, land_area, bedrooms, bathrooms,
   needs_review, developer_name, district, village,
-  cover_path, images, contact, published_at
+  cover_path, images, contact, published_at,
+  verification_status, verified_at, verification_due_at,
+  last_data_change_at, verified_fields
 `
+
+/**
+ * Halaman detail juga butuh kapan tiap bidang terakhir diperiksa.
+ *
+ * Kolom itu sengaja TIDAK ikut di KOLOM: field_checks adalah subkueri agregat
+ * per baris, dan kueri daftar mengambil 16 baris sekaligus untuk beranda dan
+ * /map. Perencana memangkas kolom view yang tidak di-SELECT, jadi memisahkan
+ * daftar kolomnya membuat halaman daftar tidak membayarnya sama sekali.
+ */
+const KOLOM_DETAIL = `${KOLOM}, field_checks`
 
 export async function getPublishedHousings(): Promise<Housing[]> {
   const supabase = createAnonClient()
@@ -26,17 +40,22 @@ export async function getPublishedHousings(): Promise<Housing[]> {
   return (data as unknown as HousingPublicRow[]).map(toHousing)
 }
 
-export async function getHousingBySlug(slug: string): Promise<Housing | null> {
+/**
+ * Dibungkus cache() karena /perumahan/[slug] memanggilnya dua kali per render —
+ * sekali di generateMetadata, sekali di komponen halaman. Tanpa ini, kueri yang
+ * lebih berat (field_checks) dijalankan dua kali untuk halaman yang sama.
+ */
+export const getHousingBySlug = cache(async (slug: string): Promise<Housing | null> => {
   const supabase = createAnonClient()
   const { data, error } = await supabase
     .from("v_housing_public")
-    .select(KOLOM)
+    .select(KOLOM_DETAIL)
     .eq("slug", slug)
     .maybeSingle()
 
   if (error) throw new Error(`Gagal memuat perumahan: ${error.message}`)
   return data ? toHousing(data as unknown as HousingPublicRow) : null
-}
+})
 
 export type NearestHousing = {
   id: string

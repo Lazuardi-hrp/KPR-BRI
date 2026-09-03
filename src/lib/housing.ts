@@ -1,4 +1,6 @@
-import type { Json } from "@/lib/database.types"
+import type { Database, Json } from "@/lib/database.types"
+
+export type VerificationStatus = Database["public"]["Enums"]["verification_status"]
 import { publicImageUrl } from "@/lib/supabase/storage-url"
 import { formatArea, formatPriceRange } from "@/lib/format"
 
@@ -52,6 +54,21 @@ export interface Housing {
   soldCommercialUnits?: number
   /** Angka diturunkan saat migrasi, belum diverifikasi tim data BRI. */
   needsReview?: boolean
+
+  // ── Verifikasi properti (migrasi 0013) ────────────────────────────────
+  verificationStatus?: VerificationStatus
+  verifiedAt?: string | null
+  verificationDueAt?: string | null
+  /** Kapan bidang material terakhir berubah — dasar "Terakhir diperbarui". */
+  lastDataChangeAt?: string | null
+  /** Bidang yang dicentang pada verifikasi TERAKHIR, bukan gabungan semuanya. */
+  verifiedFields?: string[] | null
+  /**
+   * Kapan tiap bidang terakhir diperiksa. Hanya diisi getHousingBySlug —
+   * kueri daftar tidak mengambil kolomnya supaya subkuerinya tidak ikut
+   * dihitung untuk 16 baris sekaligus.
+   */
+  fieldChecks?: Array<{ field: string; last_checked_at: string | null }> | null
 }
 
 type ImageJson = { path: string; alt: string | null; blur: string | null }
@@ -90,6 +107,12 @@ export type HousingPublicRow = {
   images: Json | null
   contact: Json | null
   published_at: string | null
+  verification_status: VerificationStatus | null
+  verified_at: string | null
+  verification_due_at: string | null
+  last_data_change_at: string | null
+  verified_fields: string[] | null
+  field_checks?: Json | null
 }
 
 const num = (v: number | string | null | undefined) => (v == null ? undefined : Number(v))
@@ -136,5 +159,13 @@ export function toHousing(r: HousingPublicRow): Housing {
     commercialUnits: r.commercial_units ?? 0,
     soldCommercialUnits: r.sold_commercial_units ?? 0,
     needsReview: r.needs_review ?? false,
+    verificationStatus: r.verification_status ?? "menunggu",
+    verifiedAt: r.verified_at,
+    verificationDueAt: r.verification_due_at,
+    lastDataChangeAt: r.last_data_change_at,
+    verifiedFields: r.verified_fields,
+    fieldChecks: Array.isArray(r.field_checks)
+      ? (r.field_checks as unknown as Housing["fieldChecks"])
+      : null,
   }
 }

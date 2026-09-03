@@ -43,3 +43,45 @@ export function formatDateTimeID(iso: string | null | undefined): string {
     minute: "2-digit",
   })
 }
+
+/**
+ * Waktu relatif: "2 hari lalu", "2 days ago".
+ *
+ * Satu-satunya pemformat di berkas ini yang menerima locale, karena hanya ini
+ * yang tampil di komponen dwibahasa. Sisanya melayani halaman yang memang
+ * berbahasa Indonesia saja.
+ *
+ * Perhatian hidrasi: nilainya diturunkan dari Date.now(), jadi server dan klien
+ * bisa berbeda satu satuan bila render melewati pergantian hari. Pemanggil
+ * wajib memasang suppressHydrationWarning pada elemen yang memuatnya — lihat
+ * <WaktuRelatif> di src/components/relative-time.tsx.
+ */
+export function formatRelative(
+  iso: string | null | undefined,
+  locale: "id" | "en" = "id",
+): string {
+  if (!iso) return "—"
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t)) return "—"
+
+  const detik = Math.round((t - Date.now()) / 1000)
+  const abs = Math.abs(detik)
+  // numeric:"always" — "auto" menghasilkan "kemarin dulu" untuk 2 hari di
+  // id-ID. Itu register percakapan; indikator kepercayaan butuh angka.
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "always" })
+
+  if (abs < 60) return rtf.format(Math.round(detik), "second")
+  if (abs < 3600) return rtf.format(Math.round(detik / 60), "minute")
+  if (abs < 86400) return rtf.format(Math.round(detik / 3600), "hour")
+  if (abs < 2592000) return rtf.format(Math.round(detik / 86400), "day")
+  if (abs < 31536000) return rtf.format(Math.round(detik / 2592000), "month")
+  return rtf.format(Math.round(detik / 31536000), "year")
+}
+
+/** Selisih hari penuh dari sekarang. Negatif = sudah lewat. */
+export function selisihHari(iso: string | null | undefined): number | null {
+  if (!iso) return null
+  const t = new Date(iso).getTime()
+  if (Number.isNaN(t)) return null
+  return Math.round((t - Date.now()) / 86_400_000)
+}

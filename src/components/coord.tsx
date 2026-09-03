@@ -19,7 +19,15 @@ export function Coord({ lat, lng, className, as: Tag = "span" }: CoordProps) {
   const ew = lng >= 0 ? "BT" : "BB"
 
   return (
-    <Tag className={cn("text-coord text-muted-foreground", className)}>
+    // `text-coord` sengaja DI LUAR cn(). tailwind-merge membaca `text-coord`
+    // sebagai utilitas warna teks — sekelompok dengan `text-muted-foreground`
+    // dan `text-mist-400` — lalu membuang yang lebih dulu. Akibatnya kelas
+    // yang membawa seluruh bentuk mikro-label ini (10px, uppercase, tracking
+    // 0.24em, tabular-nums) hilang di SETIAP pemakaian, dan koordinatnya
+    // dirender sebagai teks biasa 16px. Menaruhnya di luar cn() membuatnya
+    // tidak pernah ikut dibandingkan, sementara warnanya tetap bisa ditimpa
+    // pemanggil lewat className seperti sebelumnya.
+    <Tag className={`text-coord ${cn("text-muted-foreground", className)}`}>
       {Math.abs(lat).toFixed(4)}° {ns} · {Math.abs(lng).toFixed(4)}° {ew}
     </Tag>
   )

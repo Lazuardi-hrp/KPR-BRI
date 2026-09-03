@@ -6,6 +6,7 @@ import { X, MapPin, Phone, Mail, User } from "lucide-react"
 import { Button } from "./ui/button"
 import { Card } from "./ui/card"
 import { Coord } from "./coord"
+import VerificationChip from "./verification-chip"
 import ImageSlideshow from "./image-slideshow"
 import { useFocusTrap } from "../hooks/use-focus-trap"
 import type { Housing } from "../lib/housing"
@@ -184,6 +185,11 @@ export default function HousingPopup({ housing, onClose }: HousingPopupProps) {
                     {housing.name}
                   </h2>
                   <Coord lat={housing.lat} lng={housing.lng} as="div" className="mt-2.5" />
+                  <VerificationChip
+                    status={housing.verificationStatus}
+                    verifiedAt={housing.verifiedAt}
+                    className="mt-3"
+                  />
                   <div className="mt-3 flex items-start gap-2 text-muted-foreground">
                     <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-sky-ink" />
                     <span className="text-xs sm:text-sm">{housing.description}</span>

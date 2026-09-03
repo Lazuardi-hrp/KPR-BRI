@@ -1,15 +1,30 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { LayoutDashboard, Home, Inbox, Settings, LogOut, ShieldCheck } from "lucide-react"
+import {
+  LayoutDashboard,
+  Home,
+  Inbox,
+  Settings,
+  LogOut,
+  ShieldCheck,
+  BadgeCheck,
+  ShieldAlert,
+} from "lucide-react"
 
 import { getSesiStaf } from "@/lib/auth"
 import { keluar } from "@/app/admin/actions"
+import { getNotifikasi, getJumlahBelumDibaca } from "@/lib/queries/admin"
+import NotificationBell from "@/components/admin/notification-bell"
 
 const menu = [
-  { href: "/admin", label: "Ringkasan", icon: LayoutDashboard },
-  { href: "/admin/perumahan", label: "Perumahan", icon: Home },
-  { href: "/admin/prospek", label: "Prospek", icon: Inbox },
-  { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings },
+  { href: "/admin", label: "Ringkasan", icon: LayoutDashboard, adminSaja: false },
+  { href: "/admin/prospek", label: "Prospek", icon: Inbox, adminSaja: false },
+  { href: "/admin/verifikasi", label: "Verifikasi", icon: BadgeCheck, adminSaja: false },
+  { href: "/admin/perumahan", label: "Perumahan", icon: Home, adminSaja: false },
+  // Peristiwa penyalahgunaan hanya terbaca admin (abuse_events_read_admin);
+  // menampilkan tautannya ke pengembang hanya mengantar mereka ke halaman kosong.
+  { href: "/admin/keamanan", label: "Keamanan", icon: ShieldAlert, adminSaja: true },
+  { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings, adminSaja: false },
 ]
 
 /**
@@ -29,6 +44,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // RLS di basis data adalah yang ketiga dan yang menentukan.
   if (!sesi) redirect("/admin/login")
 
+  const [notifikasi, belumDibaca] = await Promise.all([
+    getNotifikasi(20),
+    getJumlahBelumDibaca(),
+  ])
+
+  const tautan = menu.filter((m) => !m.adminSaja || sesi.role === "admin")
+
   return (
     <div className="min-h-screen bg-secondary">
       <header className="border-b border-border bg-white">
@@ -43,7 +65,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Link>
 
           <nav className="order-3 -mx-1 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
-            {menu.map((m) => (
+            {tautan.map((m) => (
               <Link
                 key={m.href}
                 href={m.href}
@@ -56,6 +78,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
+            <NotificationBell awal={notifikasi} belumDibaca={belumDibaca} />
             <div className="text-right">
               <p className="text-sm font-semibold leading-tight text-foreground">
                 {sesi.fullName || sesi.email}
