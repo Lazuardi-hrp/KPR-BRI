@@ -1,8 +1,10 @@
 "use client"
 
 import { useEffect, useId, useMemo, useRef, useState, useTransition } from "react"
+
+import { useJejakKalkulator } from "@/components/jejak-kalkulator"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import {
   ArrowRight,
   Calculator,
@@ -33,6 +35,7 @@ import {
   type KonfigSkema,
   type SkemaKPR,
 } from "@/lib/kpr"
+import { tautanProperti, type KontakWhatsApp } from "@/lib/whatsapp"
 import type { Housing } from "@/lib/housing"
 
 /**
@@ -55,6 +58,16 @@ type Props = {
   konfig: KonfigSkema
   /** Kapan bunga terakhir dikonfirmasi ke BRI. null bila belum tercatat. */
   ditinjauPada: string | null
+  /**
+   * Kontak WhatsApp tim KPR pusat, atau null bila belum diatur.
+   *
+   * Halaman ini adalah tempat nomor itu paling berarti. Kontak perumahan hanya
+   * ada setelah sebuah perumahan dipilih, sedangkan sebagian besar orang yang
+   * membuka /simulasi justru belum memilih apa pun — mereka sedang mencari
+   * tahu apa yang sanggup mereka beli. Tanpa nomor pusat, pertanyaan pada
+   * momen itu tidak punya tujuan sama sekali.
+   */
+  waPusat?: KontakWhatsApp | null
   turnstileSiteKey?: string
 }
 
@@ -65,13 +78,17 @@ export default function KprPlanner({
   housings,
   konfig,
   ditinjauPada,
+  waPusat,
   turnstileSiteKey,
 }: Props) {
   // ?perumahan=<slug> dibaca di sini, bukan di RSC-nya: lihat catatan di
   // src/app/simulasi/page.tsx. Slug yang tidak dikenali diabaikan begitu saja
   // — tautan basi dari luar sebaiknya mendarat pada kalkulator kosong alih-alih
   // halaman galat, karena halaman ini tetap berguna tanpa perumahan mana pun.
-  const slug = useSearchParams().get("perumahan")
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+  const slug = searchParams.get("perumahan")
   const awal = useMemo(
     () => (slug ? (housings.find((h) => h.slug === slug) ?? null) : null),
     [slug, housings],
@@ -83,10 +100,49 @@ export default function KprPlanner({
   const [perumahan, setPerumahan] = useState<Housing | null>(awal ?? null)
   const [skema, setSkema] = useState<SkemaKPR>(skemaAwal)
   const [harga, setHarga] = useState(hargaAwal)
-  const [dpPersen, setDpPersen] = useState(konfig[skemaAwal].dpDefaultPersen)
-  const [tenor, setTenor] = useState(konfig[skemaAwal].tenorDefault)
-  const [penghasilan, setPenghasilan] = useState(0)
+  // Tiga masukan berikut ikut dibaca dari URL dengan nama yang SAMA seperti di
+  // /map (inc, dp, tenor). Itulah yang membuat anggaran bertahan saat orang
+  // berpindah antara mencari di peta dan menghitung di sini — tanpa nama yang
+  // sama, setiap perpindahan mengembalikannya ke nilai bawaan dan angka yang
+  // baru saja disetel hilang tanpa jejak.
+  const [dpPersen, setDpPersen] = useState(
+    () => dariUrl(searchParams.get("dp"), 90) ?? konfig[skemaAwal].dpDefaultPersen,
+  )
+  const [tenor, setTenor] = useState(
+    () => dariUrl(searchParams.get("tenor"), 40) ?? konfig[skemaAwal].tenorDefault,
+  )
+  const [penghasilan, setPenghasilan] = useState(
+    () => dariUrl(searchParams.get("inc"), 1_000_000_000) ?? 0,
+  )
   const [komitmen, setKomitmen] = useState(0)
+
+  // Ditulis balik dengan penundaan, dan `perumahan` dipertahankan apa adanya:
+  // menimpa seluruh query string akan menjatuhkan tautan dalam yang membawa
+  // pengunjung ke sini.
+  useEffect(() => {
+    const jeda = setTimeout(() => {
+      const p = new URLSearchParams(searchParams.toString())
+      if (penghasilan > 0) p.set("inc", String(penghasilan))
+      else p.delete("inc")
+      p.set("dp", String(dpPersen))
+      p.set("tenor", String(tenor))
+
+      const qs = p.toString()
+      if (qs !== searchParams.toString()) {
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+      }
+    }, 400)
+    return () => clearTimeout(jeda)
+  }, [penghasilan, dpPersen, tenor, searchParams, router, pathname])
+
+  useJejakKalkulator(perumahan?.id ?? null, [
+    skema,
+    harga,
+    dpPersen,
+    tenor,
+    penghasilan,
+    komitmen,
+  ])
 
   const [error, setError] = useState("")
   const [terkirim, setTerkirim] = useState<RingkasanProspek | null>(null)
@@ -94,6 +150,21 @@ export default function KprPlanner({
   const [verifikasi, setVerifikasi] = useState<StatusVerifikasi | null>(null)
   const [token, setToken] = useState("")
   const [pending, start] = useTransition()
+
+  // Kanal lanjutan dan pesan yang baru dikirim. Alasan keduanya ada
+  // dijelaskan di kpr-panel.tsx, yang memakai pola yang sama persis.
+  const [viaWa, setViaWa] = useState(false)
+  const [pesanTerkirim, setPesanTerkirim] = useState("")
+
+  /**
+   * Nomor tujuan: kontak perumahan bila sudah dipilih, nomor pusat bila belum.
+   *
+   * Urutannya bukan selera. Kontak pemasaran perumahan memegang stok unitnya
+   * dan bisa menjawab "masih ada tipe 36 di blok C" — jawaban yang tidak
+   * dimiliki siapa pun di pusat. Pusat hanya mengambil alih ketika pertanyaan
+   * memang belum menyangkut satu perumahan.
+   */
+  const nomorKontak = perumahan?.phone || waPusat?.nomor || null
 
   // Sinyal anti-bot, sama persis dengan KprPanel. Stempel waktunya diambil di
   // efek karena yang ingin diukur adalah sejak formulir TERLIHAT manusia, dan
@@ -218,6 +289,36 @@ export default function KprPlanner({
             </div>
           )}
         </dl>
+
+        {/* Kelanjutan percakapan — bukan pengiriman kedua. Lihat catatan yang
+            sama di kpr-panel.tsx. */}
+        {nomorKontak && (
+          <div className="mt-5">
+            <WhatsAppCta
+              phone={nomorKontak}
+              niat="lanjutan"
+              housingId={perumahan?.id ?? null}
+              varian={viaWa ? "utama" : "garis"}
+              className="w-full"
+              konteks={{
+                nama: terkirim.nama,
+                perumahan: terkirim.perumahan,
+                harga: terkirim.harga,
+                skema: terkirim.skema,
+                uangMuka: terkirim.uangMuka,
+                uangMukaPersen: terkirim.uangMukaPersen,
+                tenorTahun: terkirim.tenorTahun,
+                angsuran: terkirim.angsuran,
+                pesan: pesanTerkirim,
+                tautan: tautanProperti(perumahan?.slug),
+              }}
+            />
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              Pesan pembukanya sudah berisi ringkasan di atas — Anda tidak perlu
+              mengetik ulang apa pun.
+            </p>
+          </div>
+        )}
 
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{DISCLAIMER}</p>
 
@@ -455,6 +556,50 @@ export default function KprPlanner({
                 penghasilan pada asumsi di samping. Ini <strong>bukan</strong> plafon kredit
                 dan bukan pernyataan bahwa pengajuan Anda akan disetujui. {DISCLAIMER}
               </p>
+
+              {/*
+                Titik masuk WhatsApp yang niatnya paling jelas di seluruh situs:
+                orang di sini sudah tahu angkanya dan sedang bertanya apakah
+                angka itu wajar. Pesannya karena itu membawa penghasilan dan
+                perkiraan anggaran — tanpa keduanya percakapannya dimulai dengan
+                petugas menanyakan hal yang baru saja diketik.
+
+                Kalimat di bawah tombol WAJIB tetap ada. Pengunjung berhak tahu
+                bahwa penghasilannya ikut tersusun ke dalam pesan SEBELUM ia
+                menekan tombolnya — ia memang masih melihat dan menyetujui
+                seluruh isinya di WhatsApp, tetapi mengetahuinya di sini adalah
+                bedanya antara memilih dan mendapati.
+              */}
+              {nomorKontak && (
+                <div className="rounded-xl border border-ok/25 bg-ok-50 p-4">
+                  <WhatsAppCta
+                    phone={nomorKontak}
+                    niat="kemampuan"
+                    housingId={perumahan?.id ?? null}
+                    varian="utama"
+                    className="w-full"
+                    label="Diskusikan angka ini di WhatsApp"
+                    konteks={{
+                      perumahan: perumahan?.name,
+                      harga: perumahan?.priceMin ?? harga,
+                      skema,
+                      uangMuka: hasil.uangMuka,
+                      uangMukaPersen: hasil.uangMukaPersen,
+                      tenorTahun: hasil.tenorTahun,
+                      angsuran: hasil.angsuranBulanan,
+                      penghasilan,
+                      anggaranMaks: kemampuan.hargaMaksimum,
+                      tautan: tautanProperti(perumahan?.slug),
+                    }}
+                  />
+                  <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    Pesan pembukanya sudah memuat penghasilan, angsuran, dan perkiraan
+                    anggaran di atas. Anda masih dapat memeriksa dan mengubahnya di
+                    WhatsApp sebelum mengirim.
+                    {!perumahan && waPusat ? ` Ditujukan ke ${waPusat.label}.` : ""}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <p className="mt-3 rounded-xl border border-dashed border-border bg-secondary p-4 text-sm leading-relaxed text-muted-foreground">
@@ -582,6 +727,11 @@ export default function KprPlanner({
               fd.set("interacted", berinteraksi.current ? "1" : "0")
               fd.set("turnstile_token", token)
 
+              // Disalin sebelum pengiriman: setelah aksinya selesai formulir
+              // ini sudah tidak dirender lagi. Lihat kpr-panel.tsx.
+              const pesan = fd.get("message")
+              setPesanTerkirim(typeof pesan === "string" ? pesan : "")
+
               start(async () => {
                 const h = await kirimProspek(fd)
                 if (h.ok) {
@@ -606,7 +756,9 @@ export default function KprPlanner({
             */}
             {perumahan && <input type="hidden" name="housing_id" value={perumahan.id} />}
             <input type="hidden" name="source_page" value="Simulasi KPR" />
-            <input type="hidden" name="lead_kind" value="kalkulator" />
+            {/* Kanal yang dipilih mengalahkan asal formulirnya — lihat
+                kpr-panel.tsx. */}
+            <input type="hidden" name="lead_kind" value={viaWa ? "whatsapp" : "kalkulator"} />
             <input type="hidden" name="skema" value={skema} />
             <input type="hidden" name="dp_persen" value={dpPersen} />
             <input type="hidden" name="tenor_years" value={tenor} />
@@ -627,6 +779,12 @@ export default function KprPlanner({
                   ? `Pertanyaan Anda tentang ${perumahan.name}`
                   : "Pertanyaan Anda tentang KPR"
               }
+              waTersedia={Boolean(nomorKontak)}
+              viaWa={viaWa}
+              onViaWa={(v) => {
+                setViaWa(v)
+                tandai()
+              }}
             />
 
             <Button type="submit" size="lg" className="w-full" disabled={pending}>
@@ -637,22 +795,46 @@ export default function KprPlanner({
               ) : (
                 <>
                   <Send className="mr-2 h-4 w-4" aria-hidden />
-                  Minta dihubungi petugas
+                  {viaWa ? "Kirim & lanjut ke WhatsApp" : "Minta dihubungi petugas"}
                 </>
               )}
             </Button>
           </form>
 
-          {/* WhatsApp hanya muncul bila ada perumahan: nomornya adalah kontak
-              pemasaran perumahan itu, bukan nomor pusat. Tanpa perumahan tidak
-              ada nomor yang benar untuk dituju. */}
-          {perumahan?.phone && (
+          {/*
+            Jalan langsung, untuk orang yang tidak ingin mengisi formulir sama
+            sekali. Dulu tombol ini hanya muncul bila sebuah perumahan sudah
+            dipilih — padahal justru pengunjung yang BELUM memilih yang paling
+            sering buntu di sini: ia baru tahu anggarannya dan tidak tahu harus
+            bertanya ke mana. Nomor pusat yang mengisi celah itu; bila ia belum
+            diatur pun, perilaku lamanya persis kembali.
+
+            Niatnya 'bantuan', bukan 'kemampuan': pesannya sengaja TIDAK
+            membawa penghasilan. Yang menekan tombol di sini belum tentu sedang
+            membicarakan angkanya — tombol yang memang untuk itu ada di kartu
+            kemampuan bayar, lengkap dengan kalimat yang mengatakannya.
+          */}
+          {nomorKontak && (
             <div className="mt-3">
               <WhatsAppCta
-                housingId={perumahan.id}
-                housingName={perumahan.name}
-                phone={perumahan.phone}
+                phone={nomorKontak}
+                niat="bantuan"
+                housingId={perumahan?.id ?? null}
+                className="w-full"
+                label={
+                  perumahan ? `Tanya langsung soal ${perumahan.name}` : "Tanya petugas di WhatsApp"
+                }
+                konteks={{
+                  perumahan: perumahan?.name,
+                  harga: perumahan?.priceMin,
+                  tautan: tautanProperti(perumahan?.slug),
+                }}
               />
+              {!perumahan && waPusat?.jam && (
+                <p className="mt-2 text-center text-xs text-muted-foreground">
+                  {waPusat.label} · {waPusat.jam}
+                </p>
+              )}
             </div>
           )}
 
@@ -870,4 +1052,20 @@ function bacaAngka(v: string): number {
   if (!digit) return 0
   const n = Number(digit)
   return Number.isFinite(n) ? n : 0
+}
+
+/**
+ * Angka dari parameter URL, atau null bila tidak ada / tidak masuk akal.
+ *
+ * Berbeda dari bacaAngka di atas: yang itu membaca ketikan manusia dan selalu
+ * menghasilkan angka; yang ini membaca nilai yang bisa dikarang siapa saja dan
+ * harus bisa berkata "tidak ada", supaya pemanggilnya jatuh ke nilai bawaan
+ * skema alih-alih ke nol. Batas atasnya menyamai batas di src/lib/pencarian.ts
+ * sehingga URL yang sama berarti hal yang sama di /map dan di sini.
+ */
+function dariUrl(v: string | null, maks: number): number | null {
+  if (v == null || v.trim() === "") return null
+  const n = Number(v)
+  if (!Number.isFinite(n) || n < 0) return null
+  return Math.min(n, maks)
 }

@@ -3,8 +3,10 @@
 import { createAnonClient } from "@/lib/supabase/anon"
 import { LeadSchema, HONEYPOT, VERSI_PERSETUJUAN } from "@/lib/schemas/lead"
 import { jagaAksi } from "@/lib/security/guard"
+import { hashSesi } from "@/lib/security/identity"
 import { hitungKPR, hitungKemampuan, skemaBawaan, type SkemaKPR } from "@/lib/kpr"
 import { getKonfigKPR } from "@/lib/queries/kpr"
+import type { NiatWhatsApp } from "@/lib/whatsapp"
 
 export type HasilLead =
   /**
@@ -19,13 +21,27 @@ export type HasilLead =
   | { ok: false; butuhVerifikasi: true; turnstileTersedia: boolean }
   | { ok: false; butuhVerifikasi?: false; error: string }
 
-/** Yang ditampilkan ulang ke pengguna sebagai bukti kirimannya diterima. */
+/**
+ * Yang ditampilkan ulang ke pengguna sebagai bukti kirimannya diterima.
+ *
+ * Sejak layar "terkirim" menawarkan melanjutkan ke WhatsApp, ringkasan ini
+ * merangkap sebagai isi pesan pembuka. Karena itu ia membawa seluruh skenario
+ * — bukan hanya angsurannya — dan seluruhnya berasal dari perhitungan ULANG
+ * di server, bukan dari state komponen. Bila pesannya disusun dari state
+ * klien, pengunjung yang menggeser slider sekali lagi setelah menekan kirim
+ * akan mengirimkan skenario yang berbeda dari yang tercatat pada prospeknya,
+ * dan petugas menelepon membawa dua angka yang tidak pernah bertemu.
+ */
 export type RingkasanProspek = {
   nama: string
   /** null bila pengunjung belum memilih perumahan (kiriman dari /simulasi). */
   perumahan: string | null
   angsuran: number | null
   tenorTahun: number | null
+  harga: number | null
+  uangMuka: number | null
+  uangMukaPersen: number | null
+  skema: SkemaKPR | null
 }
 
 export async function kirimProspek(formData: FormData): Promise<HasilLead> {
@@ -163,6 +179,30 @@ export async function kirimProspek(formData: FormData): Promise<HasilLead> {
     return { ok: false, error: "Gagal mengirim. Coba beberapa saat lagi." }
   }
 
+  // Peristiwa analitik, SETELAH prospeknya benar-benar tersimpan.
+  //
+  // Ditulis di server, jadi ia tidak bisa dipalsukan dari peramban dan tidak
+  // bisa hilang karena pemblokir iklan — dua hal yang membuat tahap terbawah
+  // corong justru yang paling rawan bila hanya mengandalkan suar.
+  //
+  // Id sesi diambil dari bidang tersembunyi formulir, bukan dari LeadSchema:
+  // ia bukan data prospek, hanya penghubung ke sesi peramban supaya tahap ini
+  // sebanding dengan tahap-tahap di atasnya, yang semuanya dihitung per sesi.
+  // Bila bidangnya tidak ada, peristiwanya tetap dicatat tanpa sesi —
+  // faktanya nyata sekalipun kaitannya hilang.
+  const sesiMentah = formData.get("sesi")
+  try {
+    await supabase.rpc("record_event", {
+      p_housing_id: v.housing_id ?? null,
+      p_kind: "submit_lead",
+      p_session: typeof sesiMentah === "string" && sesiMentah ? hashSesi(sesiMentah) : null,
+      p_referrer: null,
+    })
+  } catch {
+    // Prospeknya sudah tersimpan. Kehilangan satu baris analitik tidak boleh
+    // mengubah jawaban yang diterima pengunjung menjadi kegagalan.
+  }
+
   return {
     ok: true,
     duplikat: (hasilKirim as { duplikat?: boolean } | null)?.duplikat === true,
@@ -171,6 +211,10 @@ export async function kirimProspek(formData: FormData): Promise<HasilLead> {
       perumahan: perumahan?.name ?? null,
       angsuran: estimasi?.angsuranBulanan ?? null,
       tenorTahun: estimasi?.tenorTahun ?? null,
+      harga: harga,
+      uangMuka: estimasi?.uangMuka ?? null,
+      uangMukaPersen: estimasi?.uangMukaPersen ?? null,
+      skema: skemaTerpakai,
     },
   }
 }
@@ -183,14 +227,52 @@ export async function kirimProspek(formData: FormData): Promise<HasilLead> {
  * menyimpan orangnya tanpa itu justru melanggar hal yang sedang dijaga.
  * Yang dicatat hanyalah peristiwanya, tanpa data pribadi, supaya admin tetap
  * melihat perumahan mana yang menarik minat lewat jalur ini.
+ *
+ * Jalur yang MEMANG menjadi prospek adalah formulir yang dikirim dengan
+ * lead_kind 'whatsapp' — di sana nama, nomor, dan persetujuan sudah ada, dan
+ * WhatsApp hanyalah kanal lanjutannya. Dua jalur ini sengaja tidak dilebur:
+ * yang satu peristiwa tanpa orang, yang lain orang yang memberi izin.
  */
-export async function catatKontakWhatsApp(housingId: string): Promise<void> {
-  const { putusan } = await jagaAksi("kontak", "whatsapp", {})
+export async function catatKontakWhatsApp(
+  /**
+   * Perumahan yang bersangkutan, atau null.
+   *
+   * null bukan kelalaian melainkan keadaan yang sah: pertanyaan dari
+   * /simulasi sebelum ada perumahan dipilih, dan bantuan umum, memang tidak
+   * menyangkut perumahan mana pun. record_event menerima null; mengarang
+   * sebuah id di sana akan menaruh minat pada perumahan yang tidak pernah
+   * dibuka siapa pun, lalu mengangkatnya di daftar properti terpopuler.
+   */
+  housingId: string | null,
+  /**
+   * Id sesi peramban (idSesiPublik di src/components/jejak.ts).
+   *
+   * Wajib diteruskan, bukan opsional demi kenyamanan: corong menghitung sesi
+   * yang berbeda di setiap tahap, dan peristiwa tanpa session_hash tidak
+   * pernah ikut terhitung oleh count(distinct ...). Tanpa parameter ini tahap
+   * "kontak" menampilkan nol selamanya meskipun barisnya ada di tabel.
+   */
+  sesi: string | null,
+  /**
+   * Niat yang diklik. Tidak ikut tersimpan di housing_events — tabel itu tidak
+   * punya kolomnya — melainkan diteruskan sebagai `path` ke guard_request,
+   * yang mencatatnya pada abuse_events. Di sanalah gunanya: ketika satu
+   * identitas menembakkan ratusan klik kontak, /admin/keamanan menunjukkan
+   * tombol mana yang dipakai alih-alih 'whatsapp' untuk semuanya.
+   */
+  niat: NiatWhatsApp = "properti",
+): Promise<void> {
+  const { putusan } = await jagaAksi("kontak", `whatsapp:${niat}`, {})
   if (putusan.hasil === "tolak") return
 
   const supabase = createAnonClient()
-  await supabase.from("housing_events").insert({
-    housing_id: housingId,
-    kind: "click_kontak",
+  // Lewat record_event(), bukan INSERT langsung: migrasi 0022 mencabut hak
+  // INSERT anon pada housing_events supaya kunci anon yang ikut terkirim ke
+  // peramban tidak bisa dipakai mengarang baris analitik.
+  await supabase.rpc("record_event", {
+    p_housing_id: housingId,
+    p_kind: "click_kontak",
+    p_session: sesi ? hashSesi(sesi) : null,
+    p_referrer: null,
   })
 }

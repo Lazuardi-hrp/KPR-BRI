@@ -1,12 +1,12 @@
 import Link from "next/link"
-import Image from "next/image"
 import { notFound } from "next/navigation"
-import { ArrowLeft, Star } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 
 import HousingForm from "@/components/admin/housing-form"
 import ContactForm from "@/components/admin/contact-form"
+import ImageManager from "@/components/admin/image-manager"
 import { getPerumahanUntukEdit } from "@/lib/queries/admin"
-import { publicImageUrl } from "@/lib/supabase/storage-url"
+import type { FotoPerumahan } from "@/lib/schemas/image"
 
 export const dynamic = "force-dynamic"
 
@@ -86,37 +86,12 @@ export default async function EditPerumahan({ params }: { params: Promise<{ id: 
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-white p-6 shadow-e2">
-        <h2 className="font-semibold text-foreground">Foto</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {gambar.length} foto. Sampul ditandai bintang.
-        </p>
-        {gambar.length > 0 && (
-          <ul className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {gambar.map((g) => {
-              const src = publicImageUrl(g.storage_path)
-              return (
-                <li key={g.id} className="relative overflow-hidden rounded-xl border border-border">
-                  {src && (
-                    <Image
-                      src={src}
-                      alt={g.alt || h.name}
-                      width={g.width ?? 400}
-                      height={g.height ?? 300}
-                      className="aspect-[4/3] w-full object-cover"
-                    />
-                  )}
-                  {g.is_cover && (
-                    <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-brand-orange px-2 py-1 text-xs font-bold text-white">
-                      <Star className="h-3 w-3" /> Sampul
-                    </span>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
+      <ImageManager
+        housingId={h.id}
+        housingName={h.name}
+        status={h.status}
+        awal={gambar as FotoPerumahan[]}
+      />
     </div>
   )
 }

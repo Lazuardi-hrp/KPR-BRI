@@ -1133,6 +1133,91 @@ export type Database = {
       }
     }
     Functions: {
+      /**
+       * Ditulis TANGAN (migrasi 0022). Penyimpangan kedua dari keluaran
+       * generator di berkas ini, setelah submit_lead di bawah.
+       *
+       * Bentuknya sama persis dengan keluaran generator KECUALI pada TIGA
+       * tempat, dan pada ketiganya generatorlah yang keliru — ia menandai
+       * setiap kolom hasil RPC dan setiap parameter tanpa DEFAULT sebagai
+       * non-nullable. Masalah yang sama membuat AntreanVerifikasi ditulis
+       * tangan di src/lib/queries/admin.ts. Ketiganya sudah diperiksa
+       * terhadap data sungguhan, bukan dugaan:
+       *
+       *   analytics_properti.konversi   number  -> number | null
+       *     null ketika tampilannya nol. "Belum bisa dihitung", bukan "0%" —
+       *     perumahan yang baru terbit tidak pantas berada di dasar
+       *     peringkat karena belum sempat dilihat siapa pun.
+       *
+       *   analytics_band.band           string  -> string | null
+       *     prospek yang dikirim tanpa pernah menyentuh kalkulator. Itu
+       *     keterangan tersendiri, bukan data yang hilang.
+       *
+       *   record_event.p_housing_id     string  -> string | null
+       *     peristiwa 'kunjungan' terjadi sebelum pengunjung membuka
+       *     perumahan mana pun. Persis kasus submit_lead di bawah.
+       *
+       * Terapkan ulang setelah setiap regenerasi tipe.
+       */
+      analytics_band: {
+        Args: { p_days?: number }
+        Returns: { band: string | null; jumlah: number }[]
+      }
+      analytics_funnel: {
+        Args: { p_days?: number }
+        Returns: {
+          kunjungan: number
+          lihat_properti: number
+          pakai_kalkulator: number
+          kontak: number
+          prospek: number
+          pengajuan: number
+          tampilan: number
+          kunjungan_lalu: number
+          lihat_properti_lalu: number
+          pakai_kalkulator_lalu: number
+          kontak_lalu: number
+          prospek_lalu: number
+          pengajuan_lalu: number
+          tampilan_lalu: number
+        }[]
+      }
+      analytics_harian: {
+        Args: { p_days?: number }
+        Returns: {
+          hari: string
+          pengunjung: number
+          tampilan: number
+          kalkulator: number
+          kontak: number
+          prospek: number
+        }[]
+      }
+      analytics_jam: {
+        Args: { p_days?: number }
+        Returns: { dow: number; jam: number; jumlah: number }[]
+      }
+      analytics_lokasi: {
+        Args: { p_days?: number }
+        Returns: { district: string; tampilan: number; prospek: number }[]
+      }
+      analytics_properti: {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: {
+          housing_id: string
+          name: string
+          slug: string
+          tampilan: number
+          kontak: number
+          prospek: number
+          konversi: number | null
+        }[]
+      }
+      analytics_rujukan: {
+        Args: { p_days?: number; p_limit?: number }
+        Returns: { asal: string; jumlah: number }[]
+      }
+      delete_housing_image: { Args: { p_image_id: string }; Returns: string }
       detect_traffic_spike: { Args: never; Returns: number }
       expire_verifications: { Args: never; Returns: number }
       guard_request: {
@@ -1212,6 +1297,19 @@ export type Database = {
         Args: { p_action?: string; p_ip_hash: string; p_lolos: boolean }
         Returns: undefined
       }
+      record_event: {
+        Args: {
+          p_housing_id: string | null
+          p_kind: Database["public"]["Enums"]["event_type"]
+          p_session: string | null
+          p_referrer?: string | null
+        }
+        Returns: undefined
+      }
+      reorder_housing_images: {
+        Args: { p_housing_id: string; p_ids: string[] }
+        Returns: undefined
+      }
       resolve_abuse_event: {
         Args: { p_id: number; p_selesai?: boolean }
         Returns: undefined
@@ -1249,6 +1347,7 @@ export type Database = {
           peristiwa_24j: number
         }[]
       }
+      set_housing_cover: { Args: { p_image_id: string }; Returns: undefined }
       slugify: { Args: { p_text: string }; Returns: string }
       /**
        * SATU-SATUNYA penyimpangan tangan dari keluaran `supabase gen types`:
@@ -1347,7 +1446,13 @@ export type Database = {
         | "scrape_suspect"
         | "duplicate_lead"
       audit_action: "INSERT" | "UPDATE" | "DELETE"
-      event_type: "view_detail" | "click_kontak" | "click_peta" | "submit_lead"
+      event_type:
+        | "view_detail"
+        | "click_kontak"
+        | "click_peta"
+        | "submit_lead"
+        | "kunjungan"
+        | "pakai_kalkulator"
       housing_status: "draft" | "published" | "archived"
       lead_kind:
         | "form_minat"
@@ -1518,7 +1623,14 @@ export const Constants = {
         "duplicate_lead",
       ],
       audit_action: ["INSERT", "UPDATE", "DELETE"],
-      event_type: ["view_detail", "click_kontak", "click_peta", "submit_lead"],
+      event_type: [
+        "view_detail",
+        "click_kontak",
+        "click_peta",
+        "submit_lead",
+        "kunjungan",
+        "pakai_kalkulator",
+      ],
       housing_status: ["draft", "published", "archived"],
       lead_kind: [
         "form_minat",

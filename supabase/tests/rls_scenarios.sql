@@ -247,6 +247,54 @@ begin
       'ditolak: '||sqlerrm, sqlerrm not like '%recursion%');
   end;
 
+  -- ---------- 16. anon INSERT langsung ke housing_events ----------
+  -- Sebelum 0022 ini BERHASIL: policy events_insert_public berbunyi
+  -- `to anon with check (true)` dan kunci anon ikut terkirim di bundel
+  -- peramban, jadi siapa pun bisa mengarang baris analitik sebanyak yang ia
+  -- mau. Selama tabelnya tidak pernah dibaca itu tidak merugikan; begitu ia
+  -- menjadi dasar dasbor pemasaran, ia menjadi corong racun.
+  begin
+    perform set_config('role','anon',true);
+    insert into public.housing_events (housing_id, kind) values (null, 'view_detail');
+    perform set_config('role','postgres',true);
+    insert into public._uji_hasil values (16,'anon INSERT housing_events','ditolak',
+      'BERHASIL MENULIS ANALITIK',false);
+  exception when others then
+    perform set_config('role','postgres',true);
+    insert into public._uji_hasil values (16,'anon INSERT housing_events','ditolak',sqlerrm,true);
+  end;
+
+  -- ---------- 17. anon membaca housing_events ----------
+  -- Ditolak di lapis GRANT, sebelum RLS dievaluasi — jadi hasilnya
+  -- 'permission denied', bukan '0 baris'.
+  begin
+    perform set_config('role','anon',true);
+    perform count(*) from public.housing_events;
+    perform set_config('role','postgres',true);
+    insert into public._uji_hasil values (17,'anon SELECT housing_events','ditolak',
+      'BERHASIL MEMBACA',false);
+  exception when others then
+    perform set_config('role','postgres',true);
+    insert into public._uji_hasil values (17,'anon SELECT housing_events','ditolak',sqlerrm,true);
+  end;
+
+  -- ---------- 18. KONTROL: anon menulis lewat record_event ----------
+  -- Kontrol positif. Tanpa ini, skenario 16 dan 17 juga akan "lolos" bila
+  -- seseorang mencabut seluruh akses analitik dan mematikan pencatatannya
+  -- sama sekali — pintu yang tertutup rapat dan pintu yang tidak ada sama
+  -- terlihatnya dari sisi uji negatif.
+  begin
+    perform set_config('role','anon',true);
+    perform public.record_event(null, 'kunjungan'::public.event_type, 'sesi-uji-rls', null);
+    perform set_config('role','postgres',true);
+    select count(*) into n from public.housing_events where session_hash = 'sesi-uji-rls';
+    insert into public._uji_hasil values (18,'KONTROL anon lewat record_event','berhasil',
+      'baris='||n, n = 1);
+  exception when others then
+    perform set_config('role','postgres',true);
+    insert into public._uji_hasil values (18,'KONTROL anon lewat record_event','berhasil',sqlerrm,false);
+  end;
+
   -- ---------- pembersihan ----------
   perform set_config('role','postgres',true);
   delete from public.leads where ip_hash in ('hash-uji-a','hash-rate-limit','hash-uji-draft');
@@ -257,6 +305,7 @@ begin
    where o.template = 'lead_baru'
      and not exists (select 1 from public.leads l
                       where l.id = (o.payload ->> 'lead_id')::uuid);
+  delete from public.housing_events where session_hash = 'sesi-uji-rls';
   delete from public.housings where legacy_id = 901;
   delete from auth.users where email like 'uji-%@example.invalid';
   delete from public.developers where slug in ('uji-a','uji-b');

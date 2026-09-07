@@ -32,7 +32,22 @@ export interface Housing {
   priceMin?: number | null
   priceMax?: number | null
   image?: string
+  /** LQIP sampul, dari basis data. Lihat catatan pada `gallery`. */
+  imageBlur?: string | null
   images?: string[]
+  /**
+   * Galeri lengkap, urut sebagaimana disusun admin: sampul lebih dulu, lalu
+   * sort_order.
+   *
+   * Ada di samping `images: string[]` karena keduanya menjawab pertanyaan
+   * berbeda. `images` hanya daftar URL, cukup untuk slideshow popup peta.
+   * `gallery` membawa alt dan blur PER FOTO — dan itu yang membuat foto
+   * unggahan baru punya placeholder sama sekali: src/lib/image-blur.ts
+   * mengunci blur pada nama berkas dan hanya mengenal 16 foto seed. Foto yang
+   * diunggah lewat dashboard bernama uuid dan tidak akan pernah cocok; LQIP-
+   * nya dibuat sharp saat unggah dan disimpan di housing_images.blur_data_url.
+   */
+  gallery?: GalleryImage[]
   contactPerson: string
   phone: string
   email?: string | null
@@ -70,6 +85,8 @@ export interface Housing {
    */
   fieldChecks?: Array<{ field: string; last_checked_at: string | null }> | null
 }
+
+export type GalleryImage = { url: string; alt: string | null; blur: string | null }
 
 type ImageJson = { path: string; alt: string | null; blur: string | null }
 type ContactJson = { name: string | null; phone: string | null; email: string | null }
@@ -119,7 +136,15 @@ const num = (v: number | string | null | undefined) => (v == null ? undefined : 
 
 export function toHousing(r: HousingPublicRow): Housing {
   const images = (Array.isArray(r.images) ? (r.images as unknown as ImageJson[]) : []) ?? []
-  const urls = images.map((i) => publicImageUrl(i.path)).filter((u): u is string => Boolean(u))
+  // v_housing_public sudah mengurutkannya `is_cover desc, sort_order, id`,
+  // jadi urutan admin terbawa apa adanya sampai ke galeri publik tanpa
+  // pengurutan ulang di sini — satu tempat saja yang menentukan urutan.
+  const gallery: GalleryImage[] = images.flatMap((i) => {
+    const url = publicImageUrl(i.path)
+    return url ? [{ url, alt: i.alt, blur: i.blur }] : []
+  })
+  const urls = gallery.map((g) => g.url)
+  const cover = publicImageUrl(r.cover_path) ?? gallery[0]?.url
   const contact = (r.contact ?? null) as unknown as ContactJson | null
 
   return {
@@ -139,8 +164,10 @@ export function toHousing(r: HousingPublicRow): Housing {
     priceRange: formatPriceRange(num(r.price_min), num(r.price_max)),
     priceMin: num(r.price_min) ?? null,
     priceMax: num(r.price_max) ?? null,
-    image: publicImageUrl(r.cover_path) ?? urls[0],
+    image: cover,
+    imageBlur: gallery.find((g) => g.url === cover)?.blur ?? null,
     images: urls.length ? urls : undefined,
+    gallery: gallery.length ? gallery : undefined,
     contactPerson: contact?.name ?? "",
     phone: contact?.phone ?? "",
     email: contact?.email ?? null,

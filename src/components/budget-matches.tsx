@@ -4,7 +4,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ArrowUpRight, MapPin, SearchX } from "lucide-react"
 
-import { blurFor } from "@/lib/image-blur"
+import { coverBlur } from "@/lib/image-blur"
 import { formatIDR } from "@/lib/format"
 import { Coord } from "@/components/coord"
 import VerificationChip from "@/components/verification-chip"
@@ -98,8 +98,8 @@ export default function BudgetMatches({
                   alt=""
                   fill
                   sizes="80px"
-                  placeholder={blurFor(h.image) ? "blur" : "empty"}
-                  blurDataURL={blurFor(h.image)}
+                  placeholder={coverBlur(h) ? "blur" : "empty"}
+                  blurDataURL={coverBlur(h)}
                   className="lift-img object-cover"
                 />
               </div>

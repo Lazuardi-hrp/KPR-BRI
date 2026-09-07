@@ -32,3 +32,20 @@ const stem = (src: string) =>
 
 /** Blur placeholder untuk sebuah URL gambar, dari mana pun ia dilayani. */
 export const blurFor = (src?: string) => (src ? blurMap[stem(src)] : undefined)
+
+/**
+ * Blur sampul sebuah perumahan — basis data lebih dulu, peta di atas sebagai
+ * cadangan.
+ *
+ * Urutan itu penting sejak foto bisa diunggah dari dashboard. Peta di berkas
+ * ini dikunci pada NAMA BERKAS enam belas foto seed; unggahan baru bernama
+ * uuid dan tidak akan pernah cocok dengan kunci mana pun di sana. Blur-nya
+ * dibangkitkan sharp saat unggah dan ikut di setiap baris
+ * housing_images.blur_data_url — `imageBlur` pada view model itulah yang
+ * membawanya sampai ke sini.
+ *
+ * Memakai blurFor() saja berarti setiap sampul yang diganti admin kehilangan
+ * placeholder-nya dan kartunya berkedip putih saat dimuat.
+ */
+export const coverBlur = (h: { image?: string; imageBlur?: string | null }) =>
+  h.imageBlur ?? blurFor(h.image)

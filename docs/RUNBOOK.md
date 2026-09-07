@@ -58,6 +58,21 @@ Berkas di `supabase/migrations/`, dijalankan berurutan, hanya maju.
 | `0010`–`0011` | Perbaikan performa dan rekursi kebijakan `profiles` |
 | `0012`–`0015` | Fase kritis: siklus prospek, verifikasi properti, anti-bot |
 | `0016_verification_trust.sql` | Bidang `nama`, kontak & foto menurunkan verifikasi, `field_checks` publik, `mark_needs_update()` |
+| `0017`–`0019` | Enum keamanan, pengerasan RLS, perencana keterjangkauan KPR |
+| `0020_image_manager.sql` | RPC galeri atomik (`set_housing_cover`, `reorder_housing_images`, `delete_housing_image`), sampul & urutan otomatis, batas 12 foto |
+| `0021_analytics_enums.sql` | Nilai enum `kunjungan` + `pakai_kalkulator`. **Hanya enum** — lihat §6c |
+| `0022_analytics.sql` | `record_event()`, cabut INSERT anon pada `housing_events`, indeks waktu, 7 fungsi metrik dasbor analitik |
+| `0023_whatsapp.sql` | `app_settings.public.whatsapp` — nomor WhatsApp tim pusat, diseed kosong. Lihat §5b |
+
+> **`0020` terpasang SESUDAH `0021`–`0023` di proyek ini.** Ia sempat terlewat,
+> lalu dijalankan menyusul pada 7 September 2026, sehingga ledger
+> `supabase_migrations.schema_migrations` mencatatnya paling akhir. Tidak ada
+> akibatnya: 0020 hanya bergantung pada `housing_images`, `is_admin()`, dan
+> `my_developer_id()` — semuanya dari 0001–0002 — dan tidak satu pun objek yang
+> disentuhnya bersinggungan dengan 0021–0023. Yang perlu diingat hanyalah bahwa
+> urutan pada ledger adalah urutan PEMASANGAN, bukan urutan berkas.
+>
+> `0009_storage_paths.sql` masih sengaja belum dijalankan — lihat §4.
 
 Migrasi seed aman diulang: baris yang `needs_review`-nya sudah dimatikan
 (artinya sudah dikurasi manusia) tidak akan ditimpa.
@@ -81,6 +96,59 @@ berkas lokal yang masih ada — tidak ada gambar rusak.
 
 Aset di `public/kpr-assets/` **tetap dipertahankan** (batasan `design.md` §0.2).
 
+### 4b. Mengelola foto dari dashboard
+
+Sejak migrasi 0020, unggah/ganti/hapus/urutkan foto dilakukan di
+`/admin/perumahan/{id}` — `npm run images:upload` hanya untuk migrasi seed
+satu kali dan tidak dipakai lagi setelahnya.
+
+Jalur unggahnya sengaja tidak seperti aksi lain di dashboard:
+
+| Tindakan | Lewat | Alasan |
+|---|---|---|
+| Unggah, ganti berkas | Route handler `POST /api/admin/perumahan/{id}/gambar` | Server Action dibatasi 1 MB; menaikkan `serverActions.bodySizeLimit` akan melonggarkannya untuk formulir prospek publik juga |
+| Sampul, urutan, hapus, alt | Server Action di `app/admin/actions.ts` | Muatan beberapa puluh bita; dapat pemeriksaan asal bawaan Next secara cuma-cuma |
+
+**Bentuk berkasnya ditentukan server, bukan browser.** `sharp` menormalkan
+setiap unggahan menjadi WebP q78, sisi terpanjang 1600px, rasio asli
+dipertahankan, EXIF ditanggalkan (termasuk koordinat GPS foto ponsel), lalu
+membangkitkan LQIP 12px ke `blur_data_url`. Browser hanya menciutkan berkas di
+atas 4 MB — semata agar muat di batas badan permintaan Vercel, karena
+penolakan di lapisan itu tidak pernah sampai ke kode kita dan admin hanya
+melihat kegagalan tanpa sebab.
+
+**Yang dijaga basis data, bukan aplikasi:**
+
+- Foto pertama sebuah perumahan otomatis menjadi sampul. Tanpa ini admin bisa
+  mengunggah selusin foto dan tetap tidak bisa menerbitkan apa pun
+  (`ubahStatusPerumahan` menuntut sampul).
+- Menghapus sampul mengangkat foto terdepan sebagai penggantinya, dalam
+  transaksi yang sama.
+- Menukar sampul memakai `set_housing_cover()`. Dua panggilan PostgREST
+  berturut-turut tidak bisa: `housing_images_one_cover_uq` tidak deferrable,
+  dan kegagalan di antara keduanya meninggalkan perumahan tanpa sampul.
+- Batas 12 foto per perumahan (`housing_images_cap`). Batas halaman, bukan
+  batas penyimpanan: setiap foto ikut dalam `jsonb_agg` `v_housing_public`
+  yang dikirim untuk 16 perumahan sekaligus di beranda dan `/map`.
+
+**Berkas yatim.** Bila penulisan baris gagal setelah objek terunggah, route
+handler menghapus objeknya kembali. Bila penghapusan objek yang gagal setelah
+barisnya hilang, yang tertinggal adalah berkas yang tidak dirujuk siapa pun —
+sengaja dibiarkan, karena urutan sebaliknya menghasilkan gambar rusak di
+halaman publik. Untuk menyapunya:
+
+```sql
+-- Bandingkan isi bucket dengan baris yang ada; sisanya aman dihapus.
+select o.name
+  from storage.objects o
+ where o.bucket_id = 'perumahan'
+   and not exists (select 1 from public.housing_images i where i.storage_path = o.name);
+```
+
+**Mengganti sampul menurunkan status verifikasi** menjadi `perlu_pembaruan`
+(trigger `housing_images_touch`, migrasi 0016). Mengurutkan ulang tidak —
+`sort_order` bukan klaim yang pernah diverifikasi siapa pun.
+
 ## 5. Notifikasi prospek
 
 Belum aktif. Untuk mengaktifkan:
@@ -103,6 +171,78 @@ Cek antrean macet:
 ```sql
 select status, count(*), max(attempts) from public.notification_outbox group by status;
 ```
+
+## 5b. WhatsApp
+
+WhatsApp adalah kanal lanjutan, bukan kanal terpisah: setiap tombolnya membawa
+konteks yang sudah ada di layar (nama perumahan, harga, skema, uang muka,
+jangka waktu, estimasi angsuran) supaya calon pembeli tidak mengetik ulang apa
+pun. Susunan pesannya hidup di satu tempat, `src/lib/whatsapp.ts`.
+
+### Nomor mana yang dipakai
+
+| Permukaan | Tujuan pertama | Cadangan |
+|---|---|---|
+| Detail perumahan, popup peta | `housings.phone` (kontak pemasaran) | nomor pusat |
+| Panel simulasi di halaman detail | `housings.phone` | nomor pusat |
+| `/simulasi` dengan perumahan dipilih | `housings.phone` | nomor pusat |
+| `/simulasi` tanpa perumahan | nomor pusat | — tombolnya tidak muncul |
+
+Kontak pemasaran didahulukan karena hanya ia yang memegang stok unit
+perumahannya. Nomor pusat mengambil alih ketika pertanyaan memang belum
+menyangkut satu perumahan, atau ketika sebuah perumahan belum punya kontak
+sama sekali.
+
+### Mengisi nomor pusat
+
+```sql
+update public.app_settings
+   set value = jsonb_build_object(
+         'nomor', '0812xxxxxxx',
+         'label', 'Tim KPR BRI Pematang Siantar',
+         'jam',   'Senin–Jumat, 08.00–16.00 WIB')
+ where key = 'public.whatsapp';
+```
+
+Format nomor bebas (`0812…`, `+62 812…`, `62812…`) — aplikasi menormalkannya.
+`jam` boleh `null`; isi hanya bila memang ada yang menjaga nomor itu pada jam
+tersebut. Cadangan terakhir adalah env `NEXT_PUBLIC_WHATSAPP_KPR`, tetapi baris
+pengaturan selalu menang: ia bisa dikoreksi tanpa deploy.
+
+**Nomor kosong berarti tombolnya tidak dirender sama sekali** — bukan tombol
+yang mendarat di percakapan tanpa pemilik. Setelah diisi, halaman publik
+menyusul dalam 5 menit (ISR).
+
+### Bagaimana WhatsApp masuk ke daftar prospek
+
+Dua jalur, dan keduanya sengaja berbeda:
+
+1. **Klik langsung** (tombol WhatsApp mana pun) hanya mencatat peristiwa
+   `click_kontak` — tanpa nama, nomor, atau persetujuan, karena pada titik itu
+   memang belum ada. Angkanya muncul sebagai tahap "Menghubungi WhatsApp" pada
+   corong di `/admin/analitik` dan sebagai kolom kontak pada tabel properti.
+2. **Formulir dengan centang "Lanjutkan lewat WhatsApp"** tersimpan sebagai
+   prospek penuh dengan `lead_kind = 'whatsapp'` — tampil sebagai jenis
+   **WhatsApp** di `/admin/prospek`. Artinya: orang ini minta dibalas ke
+   WhatsApp, bukan ditelepon.
+
+Yang menyambung percakapan WhatsApp dengan baris prospeknya adalah **nomor
+teleponnya**; `/admin/prospek` bisa dicari dengan nomor. Tidak ada kode
+referensi, dan sengaja tidak diadakan: satu lagi hal yang harus disalin orang
+adalah satu lagi tempat pesan gagal terhubung.
+
+Tombol WhatsApp di `/admin/prospek/[id]` membuka percakapan dengan **balasan
+pertama yang sudah tersusun** (nama, perumahan, estimasi angsuran, jangka
+waktu). Teksnya masih bisa disunting sebelum dikirim — WhatsApp hanya
+mengisinya. Penghasilan prospek sengaja tidak ikut disebut di sana.
+
+### Batas laju
+
+Klik WhatsApp memakai kuota aksi `kontak` (20 per identitas per jam, migrasi
+0014). Klik yang tertolak kuota tidak menghalangi pengguna sampai ke WhatsApp —
+yang hilang hanya baris analitiknya. Niat tombolnya (`whatsapp:properti`,
+`whatsapp:kemampuan`, …) tercatat sebagai `path` pada `abuse_events`, sehingga
+`/admin/keamanan` menunjukkan tombol mana yang ditembakkan berulang.
 
 ## 6. Jadwal pg_cron
 
@@ -446,6 +586,102 @@ versinya; **keduanya wajib berubah bersama** — menaikkan versi tanpa mengubah
 teks membuat kolom `consent_version` berbohong tentang apa yang disetujui orang.
 Prospek lama tetap menyimpan `v1`; justru itu gunanya versi.
 
+## 6c. Analitik kanal digital
+
+Dasbor `/admin/analitik` (migrasi 0021–0022). Menjawab pertanyaan yang berbeda
+dari `/admin`: bukan "apa yang harus dikerjakan hari ini" melainkan "bagaimana
+kinerja kanal ini, dan di mana ia bocor".
+
+### Yang perlu diketahui sebelum memakai angkanya
+
+**Tidak ada riwayat sebelum hari pemasangan.** `housing_events` benar-benar
+kosong — nol baris — sampai instrumentasi ini terpasang. Tidak ada yang bisa
+ditarik mundur, dan rentang terpanjang yang ditawarkan hanya 90 hari karena
+`prune-events` (§6) menghapus baris di atas 180 hari.
+
+**Ini metrik indikatif, bukan angka teraudit.** Pengenal sesi dicetak peramban,
+jadi siapa pun yang mau bisa mencetaknya berkali-kali dan menggelembungkan
+"pengunjung". Yang benar-benar membatasi hanyalah kuota per identitas di
+`guard_request` (aksi `peristiwa`, 300/jam). Pakai angka ini untuk melihat
+arah dan perbandingan antar perumahan — jangan pakai untuk pelaporan yang
+menuntut ketepatan.
+
+**Pemblokir iklan menghapus sebagian tahap atas.** `kunjungan`, `view_detail`,
+`pakai_kalkulator`, dan `click_peta` dikirim dari peramban dan bisa diblokir.
+`submit_lead` dan angka prospek ditulis server dan tidak bisa. Karena itu
+tingkat konversi cenderung terlihat **lebih tinggi** dari yang sebenarnya,
+bukan lebih rendah.
+
+**Corong menghitung SESI, bukan peristiwa.** Satu orang yang membuka sepuluh
+halaman terhitung satu. `Tampilan properti` adalah satu-satunya angka mentah
+di kartu ringkasan, dan ia pun unik per sesi — memuat ulang halaman yang sama
+tidak menambah hitungan.
+
+**Sebagian `click_kontak` tidak punya perumahan.** Sejak WhatsApp punya titik
+masuk di footer beranda dan di `/simulasi` sebelum sebuah perumahan dipilih
+(§5b), peristiwa kontak bisa lahir tanpa `housing_id`. Akibatnya tahap
+"Menghubungi WhatsApp" pada corong **lebih besar** daripada jumlah kolom kontak
+di tabel properti — `analytics_properti` menyaring `housing_id is not null`.
+Selisihnya bukan kehilangan data melainkan pertanyaan yang memang belum
+menyangkut perumahan mana pun.
+
+**Hanya admin.** `events_read_staff` berbunyi `using (public.is_admin())`,
+sehingga `pengembang` menerima nol baris — bukan galat. Halamannya karena itu
+mengalihkan peran non-admin ke `/admin`; dasbor penuh nol yang terlihat sah
+lebih menyesatkan daripada pintu terkunci. Membukanya untuk pengembang adalah
+satu kebijakan tambahan, dicatat sebagai komentar di 0022 — tetapi tahap
+`kunjungan` tidak punya `housing_id` dan tidak bisa diatribusikan ke
+pengembang mana pun, jadi corong mereka akan kehilangan puncaknya.
+
+### Menambah jenis peristiwa baru
+
+Nilai enum baru **wajib** mendarat di migrasinya sendiri, terpisah dari apa pun
+yang memakainya. PostgreSQL menolak memakai nilai enum di dalam transaksi yang
+menambahkannya, dan Supabase membungkus tiap migrasi dalam satu transaksi;
+menggabungkannya gagal dengan pesan `unsafe use of new value of enum type`.
+Itulah sebabnya 0021 hanya berisi dua baris. Pola yang sama ada di 0017.
+
+Jenis yang boleh dikirim **dari peramban** dibatasi di
+`src/lib/schemas/event.ts` (`JENIS_DARI_KLIEN`), dan daftar itu sengaja lebih
+sempit daripada enumnya: `click_kontak` dan `submit_lead` hanya ditulis Server
+Action setelah tindakannya benar-benar berhasil. Membiarkan keduanya lewat suar
+publik berarti siapa pun bisa mengarang dasar corong.
+
+### Jalur tulis
+
+`anon` **tidak lagi** punya hak INSERT pada `housing_events` (0022 mencabutnya
+bersama policy `events_insert_public`). Satu-satunya pintu adalah
+`record_event()` SECURITY DEFINER — pola yang sama dengan `submit_lead` untuk
+`leads`. Alasannya: kunci anon ikut terkirim di bundel peramban, jadi selama
+INSERT langsung terbuka, siapa pun bisa menulis baris analitik sebanyak yang ia
+mau. Selama tabelnya tidak dibaca itu tidak merugikan; begitu ia menjadi dasar
+keputusan pemasaran, ia menjadi corong racun.
+
+Uji cepat bahwa jalurnya benar-benar tertutup:
+
+```sql
+-- keduanya harus false
+select has_table_privilege('anon','public.housing_events','INSERT'),
+       has_table_privilege('anon','public.housing_events','SELECT');
+```
+
+### Zona waktu
+
+Seluruh pengelompokan harian dan per jam memakai `Asia/Jakarta`, bukan UTC.
+WIB adalah UTC+7, jadi peristiwa antara 00.00 dan 07.00 WIB akan jatuh ke
+tanggal **sebelumnya** bila dikelompokkan dalam UTC — kesalahan yang sama yang
+sudah didokumentasikan untuk pg_cron di §6, dengan akibat yang lebih halus
+karena grafiknya tetap terlihat masuk akal.
+
+### Rujukan
+
+Hanya **asal** (skema + host) yang disimpan, tidak pernah URL penuh. URL penuh
+dari situs lain bisa membawa string kueri berisi token atau alamat surel milik
+orang yang bahkan bukan pengunjung kita. Kunjungan langsung dan tautan dari
+dalam situs sendiri masuk sebagai NULL dan tidak ditampilkan sebagai
+"langsung": keduanya tidak bisa dibedakan, dan menamai gabungannya adalah
+menebak.
+
 ## 7. Catatan keamanan yang perlu diketahui
 
 **Otorisasi berlapis dua.** `anon` ditolak di lapis GRANT tingkat tabel —
@@ -535,6 +771,14 @@ npm run build && npm run check:secrets   # memastikan tidak ada rahasia di bunde
   aksi `api_read` pada `rate_limits` saat ini tidak pernah terpakai. Menutupnya
   butuh proksi baca di sisi aplikasi atau WAF di depan Supabase; keduanya di
   luar lingkup fase ini.
+- **Kiriman yang DIGABUNGKAN tidak memperbarui `lead_kind`.** Seseorang yang
+  mengirim formulir biasa lalu — dalam 6 jam, untuk perumahan yang sama —
+  mengirim ulang dengan centang "Lanjutkan lewat WhatsApp" akan digabungkan ke
+  prospek pertama oleh `submit_lead`, dan jenisnya tetap tertulis seperti
+  kiriman pertama. Konteks KPR-nya tetap disegarkan; yang tertinggal hanya
+  penanda kanalnya. Memperbaikinya berarti mendefinisikan ulang seluruh
+  `submit_lead` (±200 baris) untuk satu penugasan kolom, jadi ditahan sampai
+  ada perubahan lain yang memang menyentuh fungsi itu.
 - **`stale_form` dan `scrape_suspect` masih berupa nilai enum tanpa penulis.**
   Formulir basi sudah menaikkan skor di `guard_request()` tetapi tidak dicatat
   sebagai peristiwa tersendiri, dan deteksi penyalinan massal belum dibuat —

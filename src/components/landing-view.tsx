@@ -29,6 +29,7 @@ import { SiteFooter } from "../components/site-footer"
 import { centroid } from "../components/coord"
 import { useTranslation } from "../lib/i18n"
 import type { Housing } from "../lib/housing"
+import type { KontakWhatsApp } from "../lib/whatsapp"
 import type { SiteStats } from "../lib/queries/stats"
 
 /** Decorative, fixed, lg+ only — it must never ship to mobile. */
@@ -44,9 +45,19 @@ const stepNumbers = ["01", "02", "03"]
 export default function LandingView({
   housing,
   stats,
+  waPusat,
 }: {
   housing: Housing[]
   stats: SiteStats
+  /**
+   * Kontak WhatsApp tim KPR pusat, diteruskan apa adanya ke footer.
+   *
+   * Dibaca di RSC induknya (src/app/page.tsx) dan bukan di sini: berkas ini
+   * "use client", dan getKontakWhatsApp() berdiri di atas `import
+   * "server-only"`. null berarti belum diatur, dan footer menghilangkan
+   * barisnya alih-alih menampilkan tautan tanpa tujuan.
+   */
+  waPusat?: KontakWhatsApp | null
 }) {
   const hub = centroid(housing)
   const { t } = useTranslation()
@@ -459,7 +470,7 @@ export default function LandingView({
         </section>
       </main>
 
-      <SiteFooter items={housing} />
+      <SiteFooter items={housing} waPusat={waPusat} />
 
       <KavlingRail chapters={chapters} />
       <StickyCta after="#hero" hideOver="#mulai" count={housing.length} />

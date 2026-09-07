@@ -57,6 +57,26 @@ Nama dan telepon dipertahankan karena itu satu-satunya jalur kontak yang ada.
 **Yang dibutuhkan:** nama, telepon, dan email pemasaran yang benar per perumahan.
 Diisi lewat `/admin/perumahan/<id>` bagian "Kontak pemasaran".
 
+> **Nomor ini sekarang menerima WhatsApp, bukan hanya telepon.** Setiap tombol
+> WhatsApp di halaman detail, popup peta, dan kalkulator mengirim ke
+> `housings.phone`. Selama 12 dari 16 baris memakai `0821-2222-3333` yang sama,
+> ke-12 percakapan itu mendarat di satu nomor — dan bila nomor itu tidak
+> dipegang siapa pun, pesan calon pembeli hilang tanpa jejak apa pun di sisi
+> kami. Ini menaikkan §3 dari "data yang kurang rapi" menjadi **prasyarat
+> kanal**.
+
+## 3b. Nomor WhatsApp tim KPR pusat
+
+`app_settings.public.whatsapp` diseed **kosong** (migrasi 0023). Selama begitu:
+
+- `/simulasi` tidak menampilkan tombol WhatsApp sampai pengunjung memilih
+  sebuah perumahan — padahal orang yang baru menghitung anggarannya justru
+  belum punya satu pun yang bisa dipilih;
+- perumahan tanpa kontak pemasaran tidak punya cadangan sama sekali.
+
+**Yang dibutuhkan:** satu nomor WhatsApp yang benar-benar dijaga, beserta jam
+layanannya bila ada. Cara mengisinya di `docs/RUNBOOK.md` §5b.
+
 ## 4. Spesifikasi teknis — 15 dari 16 baris (PRD D-5, K-9)
 
 | Kolom | Terisi |
@@ -107,3 +127,33 @@ from public.housings h
 where needs_review and deleted_at is null
 order by legacy_id;
 ```
+
+---
+
+## Apa yang terbuka begitu data ini terisi
+
+Filter pencarian di `/map` tidak ditulis satu per satu; ia membaca datanya
+sendiri. `hitungFacet()` di `src/lib/pencarian.ts` menggambar sebuah kontrol
+hanya bila dimensinya punya **sekurang-kurangnya dua nilai berbeda yang
+sungguhan** di antara perumahan yang tayang.
+
+Hari ini yang tampil adalah **kecamatan, ketersediaan, jarak, dan kemampuan
+bayar**. Tiga kontrol lain sudah selesai ditulis tetapi sengaja tidak digambar,
+karena datanya belum membedakan apa pun:
+
+| Kontrol | Muncul begitu | Terkait |
+|---|---|---|
+| Rentang harga | dua perumahan punya `price_min`/`price_max` yang berbeda | §5 |
+| Tipe (subsidi / komersial) | ada perumahan dengan `commercial_units > 0` | §1 |
+| Jumlah kamar | dua perumahan punya `bedrooms` yang berbeda | §4 |
+
+Tidak ada kode yang perlu diubah untuk memunculkannya — cukup isi kolomnya
+lewat `/admin/perumahan/<id>`, dan kontrolnya hadir sendiri pada pemuatan
+berikutnya. Penggeser harga yang setiap posisinya menghasilkan 16 dari 16
+terbaca sebagai aplikasi rusak, jadi ia ditahan sampai ada yang bisa
+disaringnya.
+
+Satu hal lagi yang menyentuh peta: tiga koordinat kembar di §2 kini disebar
+pada lingkaran kecil supaya ketiganya bisa diklik. Itu **akomodasi tampilan,
+bukan perbaikan** — begitu koordinat aslinya diisi, penyebarannya berhenti
+dengan sendirinya dan pin kembali berdiri di tempat yang benar.

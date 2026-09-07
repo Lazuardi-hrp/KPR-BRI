@@ -70,7 +70,34 @@ export default function KebijakanPrivasi() {
 
           <section>
             <h2 className="font-display text-xl font-extrabold tracking-[-0.02em]">
-              3. Tujuan penggunaan
+              3. Pengukuran penggunaan situs
+            </h2>
+            <p className="mt-3 leading-relaxed text-muted-foreground">
+              Kami menghitung berapa banyak orang membuka situs ini, perumahan mana yang paling
+              sering dilihat, dan seberapa sering kalkulator KPR dipakai. Yang dicatat hanyalah{" "}
+              <strong className="text-foreground">peristiwanya</strong> — jenis tindakan, perumahan
+              yang bersangkutan, dan waktunya — tanpa nama, nomor telepon, email, atau alamat IP.
+            </p>
+            <p className="mt-3 leading-relaxed text-muted-foreground">
+              Untuk membedakan satu kunjungan dari kunjungan lain, peramban Anda membuat{" "}
+              <strong className="text-foreground">angka acak</strong> yang disimpan sementara dan
+              terhapus begitu tab ditutup. Angka itu bukan turunan dari data apa pun tentang diri
+              Anda, tidak dipakai lintas kunjungan, dan tidak pernah dibagikan ke pihak lain. Kami{" "}
+              <strong className="text-foreground">tidak memakai cookie pelacak</strong> dan tidak
+              mengikuti Anda ke situs lain.
+            </p>
+            <p className="mt-3 leading-relaxed text-muted-foreground">
+              Bila Anda tiba dari situs lain, kami menyimpan{" "}
+              <strong className="text-foreground">nama situs asalnya saja</strong> (misalnya
+              google.com) — bukan alamat halaman lengkapnya, karena alamat lengkap kadang memuat
+              informasi yang bukan urusan kami. Seluruh catatan ini terhapus otomatis setelah{" "}
+              <strong className="text-foreground">180 hari</strong>.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="font-display text-xl font-extrabold tracking-[-0.02em]">
+              4. Tujuan penggunaan
             </h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
               Data Anda dipakai semata-mata agar petugas BRI atau pengembang perumahan yang Anda
@@ -82,7 +109,7 @@ export default function KebijakanPrivasi() {
 
           <section>
             <h2 className="font-display text-xl font-extrabold tracking-[-0.02em]">
-              4. Siapa yang dapat melihat
+              5. Siapa yang dapat melihat
             </h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
               Hanya petugas yang memiliki akun pada dashboard. Pengunjung situs tidak memiliki
@@ -94,7 +121,7 @@ export default function KebijakanPrivasi() {
 
           <section>
             <h2 className="font-display text-xl font-extrabold tracking-[-0.02em]">
-              5. Berapa lama disimpan
+              6. Berapa lama disimpan
             </h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
               Data prospek disimpan paling lama <strong className="text-foreground">365 hari</strong>.
@@ -106,7 +133,7 @@ export default function KebijakanPrivasi() {
 
           <section>
             <h2 className="font-display text-xl font-extrabold tracking-[-0.02em]">
-              6. Hak Anda
+              7. Hak Anda
             </h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
               Sesuai Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi, Anda
@@ -119,7 +146,7 @@ export default function KebijakanPrivasi() {
 
           <section>
             <h2 className="font-display text-xl font-extrabold tracking-[-0.02em]">
-              7. Menghubungi kami
+              8. Menghubungi kami
             </h2>
             <p className="mt-3 leading-relaxed text-muted-foreground">
               Permintaan terkait data pribadi dapat disampaikan melalui kontak resmi BRI Kantor

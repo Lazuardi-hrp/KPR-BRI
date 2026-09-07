@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { SmoothScroll } from "../components/motion/smooth-scroll"
 import { LanguageProvider } from "../lib/i18n"
+import { JejakKunjungan } from "../components/jejak-tampilan"
 import "./globals.css"
 
 const jakarta = Plus_Jakarta_Sans({
@@ -31,6 +32,16 @@ export default function RootLayout({
         <LanguageProvider>
           <SmoothScroll>{children}</SmoothScroll>
         </LanguageProvider>
+        {/*
+          Tahap teratas corong /admin/analitik: satu baris per sesi peramban.
+          Komponennya sendiri yang menolak berjalan di /admin, supaya petugas
+          tidak terhitung sebagai pengunjung — lihat catatPeristiwa().
+
+          Terpisah dari <Analytics /> di bawah dan tidak menggantikannya:
+          Vercel Analytics mengukur web vitals dan tidak bisa dikueri dari
+          dalam aplikasi, apalagi digabungkan dengan tabel perumahan.
+        */}
+        <JejakKunjungan />
         <Analytics />
       </body>
     </html>

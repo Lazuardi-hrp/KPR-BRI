@@ -6,6 +6,19 @@ import { ContactShadows, OrbitControls, useGLTF } from "@react-three/drei"
 import * as THREE from "three"
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib"
 
+// ── Suppress THREE.Clock deprecation ────────────────────────────────────
+// R3F 9.x internally creates `new THREE.Clock()`, which Three.js ≥ 0.185
+// has deprecated in favour of `THREE.Timer`. There is no stable R3F
+// release that fixes this yet. Rather than let it clutter the console on
+// every mount, we swallow only that specific message.
+if (typeof window !== "undefined") {
+  const _warn = console.warn
+  console.warn = function filteredWarn(...args: unknown[]) {
+    if (typeof args[0] === "string" && args[0].includes("THREE.Clock")) return
+    return _warn.apply(console, args)
+  }
+}
+
 const MODEL_URL = "/models/deret-rumah-subsidi.glb"
 
 /** Three-quarter view, held between these two angles. Radians. */

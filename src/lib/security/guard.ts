@@ -22,7 +22,22 @@ import { turnstileAktif, verifikasiTurnstile } from "@/lib/security/turnstile"
  * riwayatnya sendiri — keduanya dihitung di server dari data server.
  */
 
-export type Aksi = "lead_submit" | "kalkulator" | "kontak" | "login" | "api_read"
+export type Aksi =
+  | "lead_submit"
+  | "kalkulator"
+  | "kontak"
+  | "login"
+  | "api_read"
+  /**
+   * Suar analitik dari /api/peristiwa.
+   *
+   * Kuotanya sendiri ada di app_settings.rate_limits (migrasi 0022) dengan
+   * ambang tantangan yang DISAMAKAN dengan batasnya, sehingga putusan
+   * 'tantang' tidak pernah muncul untuk aksi ini. Sebuah kotak Turnstile yang
+   * terbit karena permintaan latar belakang akan menyapa pengunjung yang
+   * sedang membaca dengan tenang, tanpa satu pun tindakan yang memicunya.
+   */
+  | "peristiwa"
 
 export type SinyalKlien = {
   /** Kolom jebakan; terisi berarti bukan manusia. */
@@ -130,7 +145,10 @@ export async function jagaAksi(
     // Penjaga yang tidak bisa dihubungi tidak boleh menjadi pintu terbuka
     // sekaligus tidak boleh mematikan situs. Aksi baca diteruskan; aksi tulis
     // ditahan, karena itulah yang benar-benar mahal bila disalahgunakan.
-    const aman = aksi === "api_read" || aksi === "kalkulator"
+    // 'peristiwa' ikut di sini: ia tidak menulis apa pun yang berharga bagi
+    // penyerang, dan menahannya saat penjaga sedang tidak bisa dihubungi
+    // hanya melubangi analitik tanpa melindungi apa pun.
+    const aman = aksi === "api_read" || aksi === "kalkulator" || aksi === "peristiwa"
     return {
       putusan: aman
         ? { hasil: "lolos", skor: 0 }

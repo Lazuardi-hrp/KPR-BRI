@@ -7,7 +7,7 @@ import { formatDateTimeID, formatDateID, formatIDR } from "@/lib/format"
 import { LABEL_STATUS, LENCANA_STATUS, LABEL_JENIS, terlambat } from "@/lib/lead-status"
 import { LABEL_KEMAMPUAN, WARNA_KEMAMPUAN, type BandKemampuan } from "@/lib/kpr"
 import LeadWorkspace from "@/components/admin/lead-workspace"
-import { nomorWa } from "@/components/whatsapp-cta"
+import { nomorWa, pesanPetugas } from "@/lib/whatsapp"
 
 export const dynamic = "force-dynamic"
 
@@ -32,6 +32,22 @@ export default async function DetailProspek({
   const { lead: l, catatan, riwayat, staf } = data
   const lewat = terlambat(l.status, l.first_contact_due_at)
   const wa = nomorWa(l.phone)
+
+  // Balasan pertama sudah tersusun, bukan percakapan kosong.
+  //
+  // Petugas yang membuka WhatsApp dari sini biasanya sedang mengerjakan
+  // sederet prospek berurutan; mengetik ulang nama perumahan dan angka
+  // simulasi untuk masing-masing adalah persis pekerjaan yang membuat kontak
+  // pertama tertunda melewati SLA-nya. Teksnya tetap bisa disunting sebelum
+  // dikirim — WhatsApp hanya mengisinya, tidak mengirimkannya.
+  const sapaan = encodeURIComponent(
+    pesanPetugas({
+      nama: l.name,
+      perumahan: l.housing?.name ?? null,
+      angsuran: l.est_monthly_payment,
+      tenorTahun: l.tenor_years,
+    }),
+  )
 
   return (
     <div className="space-y-6">
@@ -74,7 +90,7 @@ export default async function DetailProspek({
           </a>
           {wa && (
             <a
-              href={`https://wa.me/${wa}`}
+              href={`https://wa.me/${wa}?text=${sapaan}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-11 items-center gap-2 rounded-full border border-border bg-white px-5 text-sm font-semibold text-foreground hover:border-ok/40 hover:bg-ok-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

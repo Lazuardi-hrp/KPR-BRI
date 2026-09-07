@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   BadgeCheck,
   ShieldAlert,
+  ChartNoAxesColumn,
 } from "lucide-react"
 
 import { getSesiStaf } from "@/lib/auth"
@@ -24,6 +25,12 @@ const menu = [
   // Peristiwa penyalahgunaan hanya terbaca admin (abuse_events_read_admin);
   // menampilkan tautannya ke pengembang hanya mengantar mereka ke halaman kosong.
   { href: "/admin/keamanan", label: "Keamanan", icon: ShieldAlert, adminSaja: true },
+  // Alasan yang sama seperti Keamanan di atas: kebijakan events_read_staff
+  // pada housing_events berbunyi using (public.is_admin()), jadi seorang
+  // pengembang yang menekan tautan ini hanya akan sampai pada dasbor yang
+  // seluruh angkanya nol — dan nol yang berasal dari RLS tidak bisa
+  // dibedakan dari nol yang berarti tidak ada pengunjung.
+  { href: "/admin/analitik", label: "Analitik", icon: ChartNoAxesColumn, adminSaja: true },
   { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings, adminSaja: false },
 ]
 

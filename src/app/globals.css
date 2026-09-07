@@ -68,11 +68,19 @@
   --shadow-glow-brand: var(--e-glow-brand);
   --shadow-glow-orange: var(--e-glow-orange);
 
+  /* Deret kategoris untuk /admin/analitik */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  /* Tangga ordinal satu rona — corong, peta kalor, batang besaran */
+  --color-viz-1: var(--viz-1);
+  --color-viz-2: var(--viz-2);
+  --color-viz-3: var(--viz-3);
+  --color-viz-4: var(--viz-4);
+  --color-viz-5: var(--viz-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -177,11 +185,41 @@
   --e-glow-brand: 0 10px 34px -12px rgba(0, 61, 130, 0.45);
   --e-glow-orange: 0 10px 34px -12px rgba(255, 140, 66, 0.55);
 
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* ── Warna grafik ────────────────────────────────────────── *
+   * Nilai lama di sini adalah bawaan shadcn dalam oklch, tidak  *
+   * pernah dipakai satu berkas pun, dan tidak berhubungan       *
+   * dengan palet merek yang dibekukan di atas. Diganti dengan   *
+   * deret yang diturunkan dari merek dan LULUS pemeriksaan      *
+   * terhadap permukaan kartu admin yang putih (#ffffff):        *
+   *                                                             *
+   *   pasangan bersebelahan terburuk, defisiensi warna  ΔE 9,6  *
+   *   pasangan bersebelahan terburuk, penglihatan normal ΔE 20,6 *
+   *                                                             *
+   * --chart-3 (#1baf7a) berada di 2,82:1 terhadap putih, di     *
+   * bawah 3:1. Itu sebabnya setiap grafik di /admin/analitik    *
+   * WAJIB membawa label langsung dan padanan tabel — bukan      *
+   * kerapian, melainkan syarat agar slot ini boleh dipakai.     */
+  --chart-1: #2a6fbd;
+  --chart-2: #e06a25;
+  --chart-3: #1baf7a;
+  --chart-4: #8a5a00;
+  --chart-5: #7b5ea7;
+
+  /* ── Tangga ordinal ──────────────────────────────────────── *
+   * SATU rona, terang ke gelap. Dipakai ketika urutan yang      *
+   * berarti, bukan identitas: tahap corong, kepadatan peta      *
+   * kalor, besaran batang.                                      *
+   *                                                             *
+   * Ujung paling terang tidak boleh lebih terang dari ini:      *
+   * #86b6ef sudah berada di 2,11:1 terhadap putih, tepat di     *
+   * atas ambang 2:1. Enam langkah TIDAK muat di rentang ini     *
+   * dengan jarak terang yang masih terbaca — itulah sebabnya    *
+   * corongnya lima tahap, bukan enam.                           */
+  --viz-1: #86b6ef;
+  --viz-2: #5598e7;
+  --viz-3: #2a78d6;
+  --viz-4: #1c5cab;
+  --viz-5: #0d366b;
 
   --sidebar: #ffffff;
   --sidebar-foreground: #0a1a2f;
@@ -623,6 +661,34 @@ p {
 }
 .atlas-map .leaflet-popup-tip {
   border: 1px solid var(--border);
+}
+
+/* The marker preview is a React card with its own padding; the popup shell
+   only has to stop adding a second inset around it. */
+.atlas-map .leaflet-popup-content-wrapper:has(.atlas-pratinjau) {
+  padding: 0;
+  overflow: hidden;
+}
+.atlas-map .leaflet-popup-content:has(.atlas-pratinjau) {
+  margin: 0;
+  width: auto !important;
+}
+
+/* Radius ring for the distance filter. Styled here rather than through
+   Leaflet's `color` option: that option is written as an SVG presentation
+   attribute, where var() is not reliably resolved across browsers. */
+.atlas-radius {
+  stroke: var(--brand-sky);
+  stroke-width: 1.5;
+  fill: var(--brand-sky);
+  fill-opacity: 0.08;
+}
+
+/* While "pick a point on the map" is armed, the whole canvas is the control. */
+.atlas-map--memilih,
+.atlas-map--memilih .leaflet-grab,
+.atlas-map--memilih .leaflet-interactive {
+  cursor: crosshair;
 }
 
 /* ------------------------------------------------------------------ *

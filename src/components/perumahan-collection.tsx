@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { MapPin, ArrowUpRight } from "lucide-react"
-import { blurFor } from "../lib/image-blur"
+import { coverBlur } from "../lib/image-blur"
 import { RevealGroup, RevealItem } from "./motion/reveal"
 import { Coord } from "./coord"
 import VerificationChip from "./verification-chip"
@@ -48,8 +48,8 @@ export function PerumahanCollection({
                 alt={h.name}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                placeholder={blurFor(h.image) ? "blur" : "empty"}
-                blurDataURL={blurFor(h.image)}
+                placeholder={coverBlur(h) ? "blur" : "empty"}
+                blurDataURL={coverBlur(h)}
                 className="lift-img object-cover"
               />
               <span className="text-coord absolute left-3 top-3 rounded-full bg-ink/80 px-3 py-1.5 text-mist-200 backdrop-blur-sm">

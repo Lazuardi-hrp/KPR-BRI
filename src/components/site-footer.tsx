@@ -2,16 +2,25 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { MapPin, Phone } from "lucide-react"
+import { MapPin, MessageCircle, Phone } from "lucide-react"
 import { AtlasStrip } from "./atlas-strip"
+import WhatsAppCta from "./whatsapp-cta"
 import { useTranslation } from "../lib/i18n"
+import type { KontakWhatsApp } from "../lib/whatsapp"
 
 const PHONE_DISPLAY = "(0813) 71901927"
 import type { Housing } from "../lib/housing"
 
 const PHONE_TEL = "081371901927"
 
-export function SiteFooter({ items }: { items: Housing[] }) {
+export function SiteFooter({
+  items,
+  waPusat,
+}: {
+  items: Housing[]
+  /** Kontak WhatsApp tim pusat. null = barisnya tidak ada sama sekali. */
+  waPusat?: KontakWhatsApp | null
+}) {
   const { t, locale } = useTranslation()
 
   return (
@@ -45,6 +54,38 @@ export function SiteFooter({ items }: { items: Housing[] }) {
                     {t.common.phone}: {PHONE_DISPLAY}
                   </a>
                 </li>
+                {/*
+                  Jalan masuk untuk pertanyaan yang belum menyangkut perumahan
+                  mana pun. Beranda hanya menawarkan "Lihat Peta" — berguna
+                  bagi yang tahu sedang mencari apa, buntu bagi yang belum.
+                  Niatnya 'bantuan', jadi pesannya tidak membawa satu pun angka.
+                */}
+                {waPusat && (
+                  <li className="flex items-start gap-2">
+                    {/* text-brand-sky, bukan text-ok: satu-satunya hijau dalam sistem
+                        (#15803d) dipilih untuk kontras di atas PUTIH dan nyaris
+                        hilang di atas bg-ink-deep. Palet footer tetap oranye +
+                        biru; kata "WhatsApp" yang membawa artinya. */}
+                    <MessageCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-sky" />
+                    <span>
+                      <WhatsAppCta
+                        phone={waPusat.nomor}
+                        niat="bantuan"
+                        housingId={null}
+                        varian="halus"
+                        label={t.footer.whatsapp}
+                        // cn() memakai tailwind-merge, jadi warna dari sini
+                        // MENGGANTIKAN text-ok bawaan varian halus alih-alih
+                        // menumpuk. Ikon bawaannya disembunyikan: barisnya sudah
+                        // punya satu, sejajar dengan baris telepon di atasnya.
+                        className="underline-draw inline-block text-mist-200 hover:text-white [&>svg]:hidden"
+                      />
+                      {waPusat.jam && (
+                        <span className="mt-0.5 block text-xs text-mist-400">{waPusat.jam}</span>
+                      )}
+                    </span>
+                  </li>
+                )}
                 <li className="flex items-start gap-2">
                   <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-orange" />
                   Pematang Siantar, Sumatera Utara

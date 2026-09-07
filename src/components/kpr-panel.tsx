@@ -1,12 +1,15 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
+
+import { useJejakKalkulator } from "@/components/jejak-kalkulator"
 import { ArrowRight, CheckCircle2, Info, Loader2, Send, Calculator } from "lucide-react"
 
 import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import LeadFormFields, { type StatusVerifikasi } from "@/components/lead-form-fields"
+import WhatsAppCta from "@/components/whatsapp-cta"
 import { kirimProspek, type RingkasanProspek } from "@/app/actions/lead"
 import {
   hitungKPR,
@@ -17,6 +20,7 @@ import {
   type SkemaKPR,
 } from "@/lib/kpr"
 import { formatIDR, formatDateID } from "@/lib/format"
+import { tautanProperti } from "@/lib/whatsapp"
 
 /**
  * Simulasi KPR dan formulir minat sebagai satu panel.
@@ -39,6 +43,16 @@ type Props = {
   priceMin: number | null
   /** Slug perumahan, untuk menautkan ke perencana lengkap di /simulasi. */
   housingSlug?: string
+  /** Kontak pemasaran perumahan ini. Tujuan pertama setiap pesan WhatsApp. */
+  phone?: string | null
+  /**
+   * Nomor tim KPR pusat, dipakai HANYA bila perumahan ini belum punya kontak.
+   *
+   * Bukan pengganti yang setara: petugas pusat tidak memegang stok unit
+   * perumahan tertentu. Tetapi pertanyaan yang sampai ke orang yang harus
+   * meneruskannya tetap jauh lebih baik daripada tombol yang tidak ada.
+   */
+  waPusat?: string | null
   /** Parameter skema yang berlaku (app_settings). Default ke cadangan kode. */
   konfig?: KonfigSkema
   /** Kapan bunga terakhir dikonfirmasi ke BRI. */
@@ -51,15 +65,21 @@ export default function KprPanel({
   housingName,
   priceMin,
   housingSlug,
+  phone,
+  waPusat,
   konfig = SKEMA,
   ditinjauPada,
   turnstileSiteKey,
 }: Props) {
   const bisaSimulasi = priceMin != null && priceMin > 0
+  const nomorKontak = phone || waPusat || null
+  const tautan = tautanProperti(housingSlug)
 
   const [skema, setSkema] = useState<SkemaKPR>(() => skemaBawaan(priceMin))
   const [dpPersen, setDpPersen] = useState(() => konfig[skemaBawaan(priceMin)].dpDefaultPersen)
   const [tenor, setTenor] = useState(() => konfig[skemaBawaan(priceMin)].tenorDefault)
+
+  useJejakKalkulator(housingId, [skema, dpPersen, tenor])
 
   const [error, setError] = useState("")
   const [terkirim, setTerkirim] = useState<RingkasanProspek | null>(null)
@@ -68,6 +88,29 @@ export default function KprPanel({
   const [verifikasi, setVerifikasi] = useState<StatusVerifikasi | null>(null)
   const [token, setToken] = useState("")
   const [pending, start] = useTransition()
+
+  /**
+   * Pengunjung memilih melanjutkan percakapan di WhatsApp.
+   *
+   * Sebuah CENTANG, bukan tombol kirim kedua. Dua tombol berdampingan pada
+   * puncak minat memaksa orang memilih kanal sebelum ia memilih untuk
+   * menghubungi sama sekali, dan yang paling sering dipilih dalam keadaan itu
+   * adalah tidak menekan apa-apa. Centang ini hanya menjawab "lewat mana",
+   * bukan "jadi atau tidak".
+   *
+   * Akibatnya dua: prospeknya tersimpan sebagai lead_kind 'whatsapp' sehingga
+   * petugas tahu harus membalas ke sana, dan layar berhasil menaruh tombol
+   * WhatsApp sebagai tindakan utama alih-alih catatan kecil.
+   */
+  const [viaWa, setViaWa] = useState(false)
+  /**
+   * Pesan yang BARU SAJA dikirim, disalin dari FormData.
+   *
+   * Dipakai untuk mengisi pesan WhatsApp pembuka. Tanpa ini pengunjung yang
+   * baru mengetik pertanyaannya di formulir harus mengetiknya lagi di
+   * WhatsApp — tepat keluhan yang membuat orang berhenti di tengah jalan.
+   */
+  const [pesanTerkirim, setPesanTerkirim] = useState("")
 
   // Sinyal anti-bot. Dikumpulkan diam-diam; pengguna tidak pernah melihatnya.
   //
@@ -171,6 +214,40 @@ export default function KprPanel({
             </div>
           )}
         </dl>
+
+        {/*
+          Kelanjutan percakapan, bukan pengiriman kedua.
+          Prospeknya sudah tersimpan; tombol ini hanya memindahkan pembicaraan
+          ke tempat orang benar-benar membalas. Pesannya sudah memuat seluruh
+          ringkasan di atas, jadi tidak ada satu pun yang perlu diketik ulang.
+        */}
+        {nomorKontak && (
+          <div className="mt-5">
+            <WhatsAppCta
+              phone={nomorKontak}
+              niat="lanjutan"
+              housingId={housingId}
+              varian={viaWa ? "utama" : "garis"}
+              className="w-full"
+              konteks={{
+                nama: terkirim.nama,
+                perumahan: terkirim.perumahan,
+                harga: terkirim.harga,
+                skema: terkirim.skema,
+                uangMuka: terkirim.uangMuka,
+                uangMukaPersen: terkirim.uangMukaPersen,
+                tenorTahun: terkirim.tenorTahun,
+                angsuran: terkirim.angsuran,
+                pesan: pesanTerkirim,
+                tautan,
+              }}
+            />
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              Pesan pembukanya sudah berisi ringkasan di atas — Anda tidak perlu
+              mengetik ulang apa pun.
+            </p>
+          </div>
+        )}
 
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{DISCLAIMER}</p>
       </div>
@@ -307,6 +384,36 @@ export default function KprPanel({
             Hitung kemampuan bayar saya
             <ArrowRight className="h-4 w-4 shrink-0" aria-hidden />
           </Link>
+
+          {/*
+            Jalan keluar ketiga: bertanya tentang ANGKA yang barusan muncul,
+            bukan tentang perumahannya. Niatnya berbeda dari tombol di kolom
+            kontak — orang di sini sudah punya skenario dan ingin tahu apakah
+            skenario itu masuk akal — dan pesannya membawa skenario itu utuh.
+            Sengaja tetap berupa tautan halus: formulir di bawahnya yang
+            menjadi tindakan utama panel ini.
+          */}
+          {nomorKontak && (
+            <div className="mt-3 text-center">
+              <WhatsAppCta
+                phone={nomorKontak}
+                niat="kemampuan"
+                housingId={housingId}
+                varian="halus"
+                label="Tanya angsuran ini di WhatsApp"
+                konteks={{
+                  perumahan: housingName,
+                  harga: priceMin,
+                  skema,
+                  uangMuka: hasil.uangMuka,
+                  uangMukaPersen: hasil.uangMukaPersen,
+                  tenorTahun: hasil.tenorTahun,
+                  angsuran: hasil.angsuranBulanan,
+                  tautan,
+                }}
+              />
+            </div>
+          )}
         </section>
       )}
 
@@ -321,6 +428,12 @@ export default function KprPanel({
           }
           fd.set("interacted", berinteraksi.current ? "1" : "0")
           fd.set("turnstile_token", token)
+
+          // Disalin SEBELUM pengiriman: setelah aksi selesai, formulirnya
+          // sudah tidak dirender lagi dan isian pesannya ikut hilang bersama
+          // DOM-nya.
+          const pesan = fd.get("message")
+          setPesanTerkirim(typeof pesan === "string" ? pesan : "")
 
           start(async () => {
             const h = await kirimProspek(fd)
@@ -341,7 +454,16 @@ export default function KprPanel({
       >
         <input type="hidden" name="housing_id" value={housingId} />
         <input type="hidden" name="source_page" value="Detail Perumahan" />
-        <input type="hidden" name="lead_kind" value={bisaSimulasi ? "kalkulator" : "form_minat"} />
+        {/*
+          Kanal yang dipilih pengunjung mengalahkan asal formulirnya. Petugas
+          yang membuka prospek berjenis 'WhatsApp' tahu harus membalas ke sana
+          alih-alih menelepon nomor yang mungkin tidak diangkat.
+        */}
+        <input
+          type="hidden"
+          name="lead_kind"
+          value={viaWa ? "whatsapp" : bisaSimulasi ? "kalkulator" : "form_minat"}
+        />
         {bisaSimulasi && (
           <>
             <input type="hidden" name="skema" value={skema} />
@@ -356,6 +478,12 @@ export default function KprPanel({
           turnstileSiteKey={turnstileSiteKey}
           onToken={setToken}
           placeholderPesan={`Pertanyaan Anda tentang ${housingName}`}
+          waTersedia={Boolean(nomorKontak)}
+          viaWa={viaWa}
+          onViaWa={(v) => {
+            setViaWa(v)
+            tandaiInteraksi()
+          }}
         />
 
         <Button type="submit" size="lg" className="w-full" disabled={pending}>
@@ -366,7 +494,7 @@ export default function KprPanel({
           ) : (
             <>
               <Send className="mr-2 h-4 w-4" aria-hidden />
-              {bisaSimulasi ? "Ajukan KPR" : "Kirim minat"}
+              {viaWa ? "Kirim & lanjut ke WhatsApp" : bisaSimulasi ? "Ajukan KPR" : "Kirim minat"}
             </>
           )}
         </Button>

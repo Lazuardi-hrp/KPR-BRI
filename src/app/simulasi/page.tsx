@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2 } from "lucide-react"
 import KprPlanner from "@/components/kpr-planner"
 import { getPublishedHousings } from "@/lib/queries/housings"
 import { getKonfigKPR } from "@/lib/queries/kpr"
+import { getKontakWhatsApp } from "@/lib/queries/whatsapp"
 import { DISCLAIMER } from "@/lib/kpr"
 
 /**
@@ -32,7 +33,11 @@ export const metadata: Metadata = {
 }
 
 export default async function SimulasiPage() {
-  const [housings, konfig] = await Promise.all([getPublishedHousings(), getKonfigKPR()])
+  const [housings, konfig, waPusat] = await Promise.all([
+    getPublishedHousings(),
+    getKonfigKPR(),
+    getKontakWhatsApp(),
+  ])
 
   return (
     <main className="min-h-screen bg-white">
@@ -81,6 +86,7 @@ export default async function SimulasiPage() {
               housings={housings}
               konfig={konfig.skema}
               ditinjauPada={konfig.ditinjauPada}
+              waPusat={waPusat}
               turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
             />
           </Suspense>

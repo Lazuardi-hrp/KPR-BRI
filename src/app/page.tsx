@@ -1,6 +1,7 @@
 import LandingView from "@/components/landing-view"
 import { getPublishedHousings } from "@/lib/queries/housings"
 import { getSiteStats } from "@/lib/queries/stats"
+import { getKontakWhatsApp } from "@/lib/queries/whatsapp"
 
 /**
  * Shell RSC. Seluruh tampilan ada di LandingView (client component) — ia tetap
@@ -12,5 +13,6 @@ export const revalidate = 300
 export default async function Page() {
   const housing = await getPublishedHousings()
   const stats = await getSiteStats(housing)
-  return <LandingView housing={housing} stats={stats} />
+  const waPusat = await getKontakWhatsApp()
+  return <LandingView housing={housing} stats={stats} waPusat={waPusat} />
 }

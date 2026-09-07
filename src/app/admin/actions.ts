@@ -6,6 +6,7 @@ import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { getSesiStaf } from "@/lib/auth"
 import { HousingSchema, ContactSchema } from "@/lib/schemas/housing"
+import { AltSchema } from "@/lib/schemas/image"
 import type { Database } from "@/lib/database.types"
 
 type StatusProspek = Database["public"]["Enums"]["lead_status"]
@@ -204,6 +205,132 @@ export async function simpanKontak(housingId: string, formData: FormData): Promi
   segarkan()
   revalidatePath(`/admin/perumahan/${housingId}`)
   return { ok: true }
+}
+
+// ─────────────────────────── Foto perumahan ───────────────────────────
+
+/**
+ * Empat aksi galeri yang TIDAK membawa berkas.
+ *
+ * Unggahan sendiri lewat route handler (app/api/admin/perumahan/[id]/gambar)
+ * karena batas 1 MB badan Server Action; alasannya ditulis lengkap di sana.
+ * Yang di bawah ini muatannya beberapa puluh bita, jadi tidak ada alasan
+ * mengeluarkannya dari Server Action — dan sebagai Server Action ia dapat
+ * pemeriksaan asal bawaan Next serta revalidasi tanpa perjalanan tambahan.
+ *
+ * Ketiganya menumpang RPC migrasi 0020, bukan merangkai UPDATE sendiri.
+ * Menukar sampul dan mengurutkan ulang HARUS atomik — indeks unik parsial
+ * housing_images_one_cover_uq membuat versi dua-panggilan bisa meninggalkan
+ * perumahan tanpa sampul, dan perumahan tanpa sampul tidak bisa diterbitkan.
+ */
+
+function segarkanFoto(housingId: string) {
+  segarkan()
+  // Halaman detail publik dipra-render (revalidate 300). Tanpa baris ini,
+  // galeri barunya baru muncul sampai lima menit kemudian — cukup lama untuk
+  // membuat admin mengunggah foto yang sama dua kali karena mengira gagal.
+  revalidatePath("/perumahan/[slug]", "page")
+  revalidatePath(`/admin/perumahan/${housingId}`)
+}
+
+/** Menerjemahkan galat RPC galeri. Kodenya diangkat dari raise ... using errcode. */
+function pesanGalatFoto(e: { code?: string; message?: string }): string {
+  if (e.code === "P0002" || e.code === "02000") return "Foto tidak ditemukan. Muat ulang halaman."
+  if (e.code === "42501") return "Anda tidak berhak mengubah foto perumahan ini."
+  if (e.code === "22023") return "Urutan foto sudah berubah di tempat lain. Muat ulang halaman."
+  return pesanGalat(e)
+}
+
+export async function jadikanSampul(imageId: string, housingId: string): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc("set_housing_cover", { p_image_id: imageId })
+  if (error) return { ok: false, error: pesanGalatFoto(error) }
+
+  segarkanFoto(housingId)
+  return { ok: true, id: imageId }
+}
+
+/**
+ * Menyimpan urutan galeri.
+ *
+ * Daftarnya wajib utuh — setiap foto perumahan itu disebut tepat sekali.
+ * RPC-nya menolak daftar sebagian, dan itu memang yang diinginkan: dua tab
+ * admin yang menyeret foto berbeda akan saling menimpa diam-diam kalau
+ * urutan sebagian diterima.
+ */
+export async function urutkanFoto(housingId: string, ids: string[]): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
+  if (ids.length === 0) return { ok: false, error: "Tidak ada foto untuk diurutkan." }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc("reorder_housing_images", {
+    p_housing_id: housingId,
+    p_ids: ids,
+  })
+  if (error) return { ok: false, error: pesanGalatFoto(error) }
+
+  segarkanFoto(housingId)
+  return { ok: true, id: housingId }
+}
+
+/**
+ * Menghapus satu foto, berikut berkasnya di bucket.
+ *
+ * Baris dulu, berkas kemudian — dan RPC-lah yang mengangkat penerus sampul
+ * dalam transaksi yang sama, sehingga perumahan terbit tidak pernah sempat
+ * kehilangan sampulnya. Penghapusan berkas yang gagal sengaja TIDAK
+ * menggagalkan aksi: yang tersisa hanya berkas yatim yang tidak dirujuk
+ * siapa pun, sementara mengembalikan galat akan membuat admin mengira
+ * fotonya masih tampil di situs.
+ */
+export async function hapusFoto(imageId: string, housingId: string): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
+
+  const supabase = await createClient()
+  const { data: path, error } = await supabase.rpc("delete_housing_image", {
+    p_image_id: imageId,
+  })
+  if (error) return { ok: false, error: pesanGalatFoto(error) }
+
+  // Path seed lama ('/kpr-assets/x.jpg') menunjuk berkas di repo, bukan objek
+  // bucket. Meminta Storage menghapusnya hanya menghasilkan galat yang
+  // menyesatkan di log.
+  if (path && !path.startsWith("/") && !path.startsWith("http")) {
+    await supabase.storage.from("perumahan").remove([path])
+  }
+
+  segarkanFoto(housingId)
+  return { ok: true, id: imageId }
+}
+
+export async function ubahAltFoto(
+  imageId: string,
+  housingId: string,
+  alt: string,
+): Promise<Hasil> {
+  const sesi = await stafAtauGagal()
+  if (!sesi) return { ok: false, error: "Sesi berakhir. Silakan masuk kembali." }
+
+  const parsed = AltSchema.safeParse(alt)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Teks alternatif tidak valid." }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from("housing_images")
+    .update({ alt: parsed.data })
+    .eq("id", imageId)
+    .eq("housing_id", housingId)
+
+  if (error) return { ok: false, error: pesanGalatFoto(error) }
+  segarkanFoto(housingId)
+  return { ok: true, id: imageId }
 }
 
 // ─────────────────────────── Prospek ───────────────────────────

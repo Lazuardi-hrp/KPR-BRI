@@ -85,3 +85,55 @@ export function selisihHari(iso: string | null | undefined): number | null {
   if (Number.isNaN(t)) return null
   return Math.round((t - Date.now()) / 86_400_000)
 }
+
+/**
+ * Persentase untuk dibaca manusia, bukan untuk dihitung ulang.
+ *
+ * null menghasilkan "—", bukan "0%". Perbedaannya bukan kosmetik: 0% berarti
+ * "diukur, hasilnya nol", sedangkan null berarti "belum bisa diukur". Sebuah
+ * perumahan yang baru terbit kemarin dan belum punya satu pun tampilan
+ * termasuk yang kedua, dan menampilkannya sebagai 0% menempatkannya di dasar
+ * tabel peringkat seolah ia gagal.
+ */
+export function formatPersen(n: number | null | undefined, desimal = 0): string {
+  if (n == null || !Number.isFinite(n)) return "—"
+  return `${n.toLocaleString("id-ID", {
+    minimumFractionDigits: desimal,
+    maximumFractionDigits: desimal,
+  })}%`
+}
+
+export type Delta = {
+  /** Selisih relatif dalam persen; null bila periode lalu nol. */
+  persen: number | null
+  arah: "naik" | "turun" | "tetap"
+  /** Siap tampil: "+24%", "−8%", "0%", atau "baru". */
+  teks: string
+}
+
+/**
+ * Perbandingan satu angka dengan periode sebelumnya.
+ *
+ * Pembagi nol TIDAK menjadi Infinity atau 100%. Naik dari 0 ke 5 bukan
+ * "kenaikan 500%" — tidak ada dasar untuk membandingkannya sama sekali, dan
+ * angka besar yang muncul dari ketiadaan adalah cara tercepat membuat orang
+ * berhenti mempercayai seluruh dasbor. Kasus itu dilaporkan sebagai "baru".
+ *
+ * Tanda minus memakai U+2212 (−), bukan tanda hubung, supaya sejajar dengan
+ * angka pada kolom tabular.
+ */
+export function hitungDelta(sekarang: number, lalu: number): Delta {
+  if (lalu === 0) {
+    return sekarang === 0
+      ? { persen: 0, arah: "tetap", teks: "0%" }
+      : { persen: null, arah: "naik", teks: "baru" }
+  }
+  const persen = ((sekarang - lalu) / lalu) * 100
+  const bulat = Math.round(persen)
+  if (bulat === 0) return { persen: 0, arah: "tetap", teks: "0%" }
+  return {
+    persen,
+    arah: bulat > 0 ? "naik" : "turun",
+    teks: `${bulat > 0 ? "+" : "−"}${Math.abs(bulat).toLocaleString("id-ID")}%`,
+  }
+}

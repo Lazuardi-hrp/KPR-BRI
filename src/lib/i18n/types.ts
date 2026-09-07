@@ -142,6 +142,8 @@ export interface Translations {
   footer: {
     tagline: string
     contact: string
+    /** Label tautan WhatsApp pada blok kontak. */
+    whatsapp: string
     serviceArea: string
     city: string
     copyright: string
@@ -201,6 +203,8 @@ export interface Translations {
     contactAgent: string
     salesAgent: string
     callNow: string
+    /** Label tombol WhatsApp pada baris tindakan popup. */
+    whatsapp: string
   }
 
   // ── Property Verification ──────────────────────────────────────────────
@@ -268,6 +272,65 @@ export interface Translations {
   // ── Housing Map ────────────────────────────────────────────────────────
   housingMap: {
     yourLocation: string
+  }
+
+  // ── Map search — filters, reference point, marker preview ───────────────
+  //
+  // Angka dan istilah KPR (angsuran, band kemampuan, disclaimer) TIDAK ada di
+  // sini: seluruhnya dibaca dari src/lib/kpr.ts, sama seperti /simulasi dan
+  // /perumahan/[slug]. Menyalinnya ke kamus akan membuat dua tempat mengeja
+  // ambang yang sama, dan yang satu akan tertinggal.
+  mapSearch: {
+    filters: string
+    filterCount: string // "Filter ({n})"
+    openFilters: string
+    closeFilters: string
+    reset: string
+    results: string // "{n} of {m} housing"
+    noMatches: string
+    noMatchesHint: string
+    zoomToResults: string
+
+    district: string
+    allDistricts: string
+    availability: string
+    minUnits: string // "At least {n} units"
+
+    // Reference point
+    distance: string
+    measureFrom: string
+    useMyLocation: string
+    locating: string
+    pickOnMap: string
+    pickOnMapHint: string
+    cancelPick: string
+    searchAddress: string
+    addressPlaceholder: string
+    searching: string
+    noAddressFound: string
+    referencePoint: string
+    clearPoint: string
+    radius: string
+    radiusValue: string // "Within {n} km"
+    anyDistance: string
+
+    // Budget
+    budget: string
+    budgetHint: string
+    monthlyIncome: string
+    downPayment: string
+    tenor: string
+    tenorYears: string // "{n} years"
+    showOnly: string
+    anyInstalment: string
+    perMonth: string // "/month"
+    estimateFrom: string // "Rates reviewed {date}"
+
+    // Marker preview
+    viewDetail: string
+    closePreview: string
+    unitsLeft: string // "{n} units"
+    distanceAway: string // "{d} away"
   }
 
   // ── Language Switcher ──────────────────────────────────────────────────

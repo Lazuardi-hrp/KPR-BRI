@@ -171,6 +171,7 @@ export const en: Translations = {
     tagline:
       "Trusted subsidized mortgage solution to make Indonesian families' dream homes a reality.",
     contact: "Contact",
+    whatsapp: "Chat on WhatsApp",
     serviceArea: "Service Area",
     city: "Pematangsiantar City & Simalungun Regency",
     copyright: "KPR BRI Pematang Siantar. BRI is a participant in the LPS guarantee program. All rights reserved.",
@@ -230,6 +231,7 @@ export const en: Translations = {
     contactAgent: "Contact Sales Agent",
     salesAgent: "Sales Agent",
     callNow: "Call Now",
+    whatsapp: "Chat on WhatsApp",
   },
 
   // ── Property Verification ──────────────────────────────────────────────
@@ -294,6 +296,56 @@ export const en: Translations = {
   // ── Housing Map ────────────────────────────────────────────────────────
   housingMap: {
     yourLocation: "Your Location",
+  },
+
+  mapSearch: {
+    filters: "Filters",
+    filterCount: "Filters ({n})",
+    openFilters: "Open search filters",
+    closeFilters: "Close filters",
+    reset: "Clear filters",
+    results: "{n} of {m} housing",
+    noMatches: "No housing matches your filters.",
+    noMatchesHint: "Try loosening one filter — widen the radius, or select more districts.",
+    zoomToResults: "Zoom to results",
+
+    district: "District",
+    allDistricts: "All districts",
+    availability: "Availability",
+    minUnits: "At least {n} units",
+
+    distance: "Distance",
+    measureFrom: "Measure distance from",
+    useMyLocation: "My location",
+    locating: "Finding your location…",
+    pickOnMap: "Pick a point on the map",
+    pickOnMapHint: "Tap anywhere on the map to drop a reference point.",
+    cancelPick: "Cancel point selection",
+    searchAddress: "Search an address",
+    addressPlaceholder: "Street, place, or village…",
+    searching: "Searching…",
+    noAddressFound: "Address not found. Try a broader keyword.",
+    referencePoint: "Reference point",
+    clearPoint: "Clear reference point",
+    radius: "Radius",
+    radiusValue: "Within {n} km",
+    anyDistance: "Any distance",
+
+    budget: "What you can afford",
+    budgetHint: "Enter your monthly income to see the estimated instalment for each housing.",
+    monthlyIncome: "Monthly income",
+    downPayment: "Down payment",
+    tenor: "Tenor",
+    tenorYears: "{n} years",
+    showOnly: "Show only",
+    anyInstalment: "Any instalment",
+    perMonth: "/month",
+    estimateFrom: "Rates reviewed {date}",
+
+    viewDetail: "View detail",
+    closePreview: "Close preview",
+    unitsLeft: "{n} units",
+    distanceAway: "{d} from reference point",
   },
 
   // ── Language Switcher ──────────────────────────────────────────────────

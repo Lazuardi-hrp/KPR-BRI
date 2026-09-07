@@ -10,6 +10,16 @@ import { useTranslation } from "../lib/i18n"
 
 interface ImageSlideshowProps {
   images: string[]
+  /**
+   * Blur per foto, sejajar indeks dengan `images`.
+   *
+   * Ada sejak foto bisa diunggah dari dashboard: blurFor() mengunci placeholder
+   * pada nama berkas enam belas foto seed, dan unggahan baru bernama uuid tidak
+   * akan pernah cocok. Nilai yang benar sudah tersimpan per baris di basis data
+   * dan dibawa ke sini lewat `Housing.gallery`. Opsional — pemanggil yang tidak
+   * punya galeri tetap jatuh ke peta statis.
+   */
+  blurs?: (string | null | undefined)[]
   title: string
   /** Pre-composed availability sentence — the popup decides what the data supports. */
   statusLabel: string
@@ -19,6 +29,7 @@ interface ImageSlideshowProps {
 
 export default function ImageSlideshow({
   images,
+  blurs,
   title,
   statusLabel,
   statusColor,
@@ -49,6 +60,7 @@ export default function ImageSlideshow({
   }
 
   const src = displayImages[currentIndex] || "/placeholder.svg"
+  const blur = blurs?.[currentIndex] ?? blurFor(src)
 
   return (
     <div
@@ -73,8 +85,8 @@ export default function ImageSlideshow({
             alt={`${title} — ${t.slideshow.photoNofM.replace("{n}", String(currentIndex + 1)).replace("{m}", String(count))}`}
             fill
             sizes="(max-width: 640px) 100vw, 640px"
-            placeholder={blurFor(src) ? "blur" : "empty"}
-            blurDataURL={blurFor(src)}
+            placeholder={blur ? "blur" : "empty"}
+            blurDataURL={blur ?? undefined}
             // The optimizer refuses SVG by default; the fallback ships as-is.
             unoptimized={src.endsWith(".svg")}
             className="object-cover"

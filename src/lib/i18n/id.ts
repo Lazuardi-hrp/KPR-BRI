@@ -171,6 +171,7 @@ export const id: Translations = {
     tagline:
       "Solusi KPR bersubsidi terpercaya untuk mewujudkan rumah impian keluarga Indonesia.",
     contact: "Kontak",
+    whatsapp: "Chat WhatsApp",
     serviceArea: "Wilayah Layanan",
     city: "Kota Pematangsiantar & Kabupaten Simalungun",
     copyright: "KPR BRI Pematang Siantar. BRI adalah peserta penyelenggara LPS. Semua hak dilindungi.",
@@ -230,6 +231,7 @@ export const id: Translations = {
     contactAgent: "Hubungi Agen Penjualan",
     salesAgent: "Agen Penjualan",
     callNow: "Hubungi Sekarang",
+    whatsapp: "Chat WhatsApp",
   },
 
   // ── Property Verification ──────────────────────────────────────────────
@@ -294,6 +296,56 @@ export const id: Translations = {
   // ── Housing Map ────────────────────────────────────────────────────────
   housingMap: {
     yourLocation: "Lokasi Anda",
+  },
+
+  mapSearch: {
+    filters: "Filter",
+    filterCount: "Filter ({n})",
+    openFilters: "Buka filter pencarian",
+    closeFilters: "Tutup filter",
+    reset: "Hapus filter",
+    results: "{n} dari {m} perumahan",
+    noMatches: "Tidak ada perumahan yang cocok dengan filter Anda.",
+    noMatchesHint: "Coba longgarkan salah satu filter — misalnya perbesar radius atau pilih lebih banyak kecamatan.",
+    zoomToResults: "Perbesar ke hasil",
+
+    district: "Kecamatan",
+    allDistricts: "Semua kecamatan",
+    availability: "Ketersediaan",
+    minUnits: "Minimal {n} unit",
+
+    distance: "Jarak",
+    measureFrom: "Ukur jarak dari",
+    useMyLocation: "Lokasi saya",
+    locating: "Mencari lokasi Anda…",
+    pickOnMap: "Pilih titik di peta",
+    pickOnMapHint: "Ketuk di mana saja pada peta untuk menaruh titik acuan.",
+    cancelPick: "Batal memilih titik",
+    searchAddress: "Cari alamat",
+    addressPlaceholder: "Nama jalan, tempat, atau kelurahan…",
+    searching: "Mencari…",
+    noAddressFound: "Alamat tidak ditemukan. Coba kata kunci yang lebih umum.",
+    referencePoint: "Titik acuan",
+    clearPoint: "Hapus titik acuan",
+    radius: "Radius",
+    radiusValue: "Dalam {n} km",
+    anyDistance: "Berapa pun",
+
+    budget: "Kemampuan bayar",
+    budgetHint: "Isi penghasilan bulanan Anda untuk melihat perkiraan angsuran tiap perumahan.",
+    monthlyIncome: "Penghasilan bulanan",
+    downPayment: "Uang muka",
+    tenor: "Tenor",
+    tenorYears: "{n} tahun",
+    showOnly: "Tampilkan hanya",
+    anyInstalment: "Semua angsuran",
+    perMonth: "/bulan",
+    estimateFrom: "Bunga ditinjau {date}",
+
+    viewDetail: "Lihat detail",
+    closePreview: "Tutup pratinjau",
+    unitsLeft: "{n} unit",
+    distanceAway: "{d} dari titik acuan",
   },
 
   // ── Language Switcher ──────────────────────────────────────────────────

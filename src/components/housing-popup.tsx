@@ -8,9 +8,11 @@ import { Card } from "./ui/card"
 import { Coord } from "./coord"
 import VerificationChip from "./verification-chip"
 import ImageSlideshow from "./image-slideshow"
+import WhatsAppCta from "./whatsapp-cta"
 import { useFocusTrap } from "../hooks/use-focus-trap"
 import type { Housing } from "../lib/housing"
 import { useTranslation } from "../lib/i18n"
+import { tautanProperti } from "../lib/whatsapp"
 
 type HousingPopupProps = {
   housing: Housing
@@ -166,6 +168,11 @@ export default function HousingPopup({ housing, onClose }: HousingPopupProps) {
                     Boolean,
                   ) as string[]
                 }
+                // Sejajar indeks dengan `images` karena keduanya diturunkan
+                // dari daftar yang sama di toHousing(). Bila galeri kosong,
+                // `images` jatuh ke sampul saja dan blurs ikut kosong —
+                // slideshow lalu memakai peta statis seperti sebelumnya.
+                blurs={housing.images?.length ? housing.gallery?.map((g) => g.blur) : undefined}
                 title={housing.name}
                 statusLabel={
                   availabilityStatus
@@ -280,7 +287,28 @@ export default function HousingPopup({ housing, onClose }: HousingPopupProps) {
 
                 {/* Actions */}
                 <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row md:pt-5">
-                  <Button asChild className="flex-1">
+                  {/*
+                    WhatsApp mendahului telepon, dan urutannya adalah
+                    keputusannya sendiri: popup ini paling sering dibuka di
+                    ponsel sambil berjalan, dan sebuah panggilan menuntut kedua
+                    pihak siap pada detik yang sama. Pesan berisi nama, harga,
+                    dan tautan perumahan bisa dikirim sekarang dan dijawab
+                    nanti — dan yang terkirim lebih sering menjadi percakapan.
+                  */}
+                  <WhatsAppCta
+                    phone={housing.phone}
+                    niat="properti"
+                    housingId={housing.id}
+                    varian="utama"
+                    label={t.popup.whatsapp}
+                    className="flex-1"
+                    konteks={{
+                      perumahan: housing.name,
+                      harga: housing.priceMin,
+                      tautan: tautanProperti(housing.slug),
+                    }}
+                  />
+                  <Button asChild variant="outline" className="flex-1">
                     <a href={`tel:${housing.phone}`}>{t.popup.callNow}</a>
                   </Button>
                   <Button variant="secondary" className="flex-1" onClick={close}>

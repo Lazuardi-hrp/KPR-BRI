@@ -68,7 +68,7 @@ npm run dev              # butuh .env.local — lihat .env.example
 npm run build            # /, /map, dan 16 halaman detail dipra-render (ISR 5 menit)
 npm run check:secrets    # memastikan tidak ada nilai rahasia di bundel klien
 npm run admin:promote -- email@bri.co.id     # naikkan akun jadi admin
-npm run images:upload    # pindahkan foto ke Supabase Storage
+npm run images:upload    # migrasi seed satu kali; foto sehari-hari dikelola di /admin/perumahan/{id}
 ```
 
 Dokumen operasional:
