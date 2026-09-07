@@ -58,6 +58,26 @@ export type KontakWhatsApp = {
 }
 
 /**
+ * Nomor E.164 kembali menjadi bentuk lokal yang dibaca orang Indonesia.
+ *   6281371901927 -> 0813 7190 1927
+ *
+ * Ada karena yang DISIMPAN hanya satu nilai. Menyimpan bentuk tampilannya
+ * sebagai kolom kedua berarti dua nilai yang harus diubah bersama, dan yang
+ * kedua akan tertinggal pada penggantian nomor pertama — persis duplikasi yang
+ * dibereskan dengan menghapus PHONE_DISPLAY/PHONE_TEL dari footer dan dari
+ * landing-view.
+ *
+ * Pengelompokan empat digit dipakai apa adanya: ia benar untuk nomor seluler
+ * Indonesia (0813 7190 1927) dan tidak pernah salah baca untuk panjang lain,
+ * hanya kurang lazim. Menebak pola per operator akan salah lebih sering
+ * daripada berhasil.
+ */
+export function formatNomorTampil(nomor: string): string {
+  const lokal = nomor.startsWith("62") ? `0${nomor.slice(2)}` : nomor
+  return lokal.replace(/(\d{4})(?=\d)/g, "$1 ").trim()
+}
+
+/**
  * Niat pengunjung saat menekan tombolnya.
  *
  * Bukan hiasan: niat menentukan kalimat pembuka DAN bidang mana yang pantas

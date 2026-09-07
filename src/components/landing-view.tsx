@@ -36,8 +36,6 @@ import type { SiteStats } from "../lib/queries/stats"
 const KavlingRail = dynamic(() => import("../components/kavling-rail"), { ssr: false })
 const StickyCta = dynamic(() => import("../components/sticky-cta"), { ssr: false })
 
-const PHONE_TEL = "081371901927"
-
 const benefitIcons = [Home, Percent, Shield]
 const benefitIndices = ["K-01", "K-02", "K-03"]
 const stepNumbers = ["01", "02", "03"]
@@ -453,12 +451,20 @@ export default function LandingView({
                   </Link>
                 </Button>
               </Magnetic>
-              <Button asChild size="lg" variant="ink-outline">
-                <a href={`tel:${PHONE_TEL}`}>
-                  <Phone />
-                  {t.common.contactUs}
-                </a>
-              </Button>
+              {/*
+                Nomornya dari app_settings `public.whatsapp` — sumber yang sama
+                dengan footer. Sebelumnya berkas ini dan site-footer.tsx
+                masing-masing mengeja angka yang sama, jadi mengganti nomor tim
+                menuntut dua suntingan yang tidak pernah dibuka bersamaan.
+              */}
+              {waPusat && (
+                <Button asChild size="lg" variant="ink-outline">
+                  <a href={`tel:+${waPusat.nomor}`}>
+                    <Phone />
+                    {t.common.contactUs}
+                  </a>
+                </Button>
+              )}
             </Reveal>
 
             <Reveal delay={0.2}>

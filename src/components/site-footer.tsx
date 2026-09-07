@@ -6,12 +6,8 @@ import { MapPin, MessageCircle, Phone } from "lucide-react"
 import { AtlasStrip } from "./atlas-strip"
 import WhatsAppCta from "./whatsapp-cta"
 import { useTranslation } from "../lib/i18n"
-import type { KontakWhatsApp } from "../lib/whatsapp"
-
-const PHONE_DISPLAY = "(0813) 71901927"
+import { formatNomorTampil, type KontakWhatsApp } from "../lib/whatsapp"
 import type { Housing } from "../lib/housing"
-
-const PHONE_TEL = "081371901927"
 
 export function SiteFooter({
   items,
@@ -48,12 +44,33 @@ export function SiteFooter({
             <div>
               <h2 className="text-coord mb-5 text-brand-orange">{t.footer.contact}</h2>
               <ul className="space-y-3 text-sm text-mist-200">
-                <li className="flex items-start gap-2">
-                  <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-sky" />
-                  <a href={`tel:${PHONE_TEL}`} className="underline-draw numeric inline-block hover:text-white">
-                    {t.common.phone}: {PHONE_DISPLAY}
-                  </a>
-                </li>
+                {/*
+                  Nomornya berasal dari app_settings `public.whatsapp`, sumber
+                  yang sama dengan baris WhatsApp di bawahnya. Sebelumnya ia
+                  dieja sebagai dua konstanta di berkas ini — jadi mengganti
+                  nomor tim menuntut satu perubahan basis data DAN satu deploy,
+                  dan yang kedua akan terlupa. Bentuk tampilannya diturunkan,
+                  bukan disimpan, dengan alasan yang sama.
+
+                  Konsekuensi yang perlu diketahui: barisnya menawarkan `tel:`
+                  atas nomor yang dicatat sebagai kontak WhatsApp. Keduanya
+                  memang satu nomor hari ini, dan nomor WhatsApp bisnis di
+                  Indonesia hampir selalu jalur seluler sungguhan — tetapi bila
+                  suatu saat tim memakai nomor yang tidak menerima panggilan,
+                  pemisahannya harus terjadi di app_settings, bukan dengan
+                  menuliskan lagi sebuah angka di sini.
+                */}
+                {waPusat && (
+                  <li className="flex items-start gap-2">
+                    <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-sky" />
+                    <a
+                      href={`tel:+${waPusat.nomor}`}
+                      className="underline-draw numeric inline-block hover:text-white"
+                    >
+                      {t.common.phone}: {formatNomorTampil(waPusat.nomor)}
+                    </a>
+                  </li>
+                )}
                 {/*
                   Jalan masuk untuk pertanyaan yang belum menyangkut perumahan
                   mana pun. Beranda hanya menawarkan "Lihat Peta" — berguna
