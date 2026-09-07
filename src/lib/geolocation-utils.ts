@@ -1,12 +1,14 @@
 // Utility untuk menghitung jarak dan merekomendasikan perumahan terdekat
 
+import type { Housing } from "./housing"
+
 export interface Coordinates {
   lat: number
   lng: number
 }
 
 export interface HousingDistance {
-  housing: any
+  housing: Housing
   distance: number // dalam kilometer
 }
 
@@ -26,7 +28,11 @@ export const calculateDistance = (coord1: Coordinates, coord2: Coordinates): num
 }
 
 // Mendapatkan perumahan terdekat
-export const getNearestHousing = (userLocation: Coordinates, housingList: any[], limit: number = 5): HousingDistance[] => {
+export const getNearestHousing = (
+  userLocation: Coordinates,
+  housingList: Housing[],
+  limit: number = 5,
+): HousingDistance[] => {
   const distances = housingList.map((housing) => ({
     housing,
     distance: calculateDistance(userLocation, {

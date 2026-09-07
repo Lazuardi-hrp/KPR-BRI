@@ -1,91 +1,157 @@
 "use client"
 
+import { AnimatePresence, motion } from "motion/react"
+import Image from "next/image"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useState } from "react"
+import { useCallback, useState } from "react"
+import { cn } from "../lib/utils"
+import { blurFor } from "../lib/image-blur"
+import { useTranslation } from "../lib/i18n"
 
 interface ImageSlideshowProps {
   images: string[]
+  /**
+   * Blur per foto, sejajar indeks dengan `images`.
+   *
+   * Ada sejak foto bisa diunggah dari dashboard: blurFor() mengunci placeholder
+   * pada nama berkas enam belas foto seed, dan unggahan baru bernama uuid tidak
+   * akan pernah cocok. Nilai yang benar sudah tersimpan per baris di basis data
+   * dan dibawa ke sini lewat `Housing.gallery`. Opsional — pemanggil yang tidak
+   * punya galeri tetap jatuh ke peta statis.
+   */
+  blurs?: (string | null | undefined)[]
   title: string
-  availabilityPercent: number
-  availabilityStatus: string
+  /** Pre-composed availability sentence — the popup decides what the data supports. */
+  statusLabel: string
+  /** Tailwind text-colour class for the availability status. */
   statusColor: string
 }
 
 export default function ImageSlideshow({
   images,
+  blurs,
   title,
-  availabilityPercent,
-  availabilityStatus,
+  statusLabel,
   statusColor,
 }: ImageSlideshowProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const displayImages = images && images.length > 0 ? images : ["/placeholder.svg"]
+  const count = displayImages.length
+  const { t } = useTranslation()
 
-  const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1))
+  const goToPrevious = useCallback(
+    () => setCurrentIndex((prev) => (prev === 0 ? count - 1 : prev - 1)),
+    [count],
+  )
+  const goToNext = useCallback(
+    () => setCurrentIndex((prev) => (prev === count - 1 ? 0 : prev + 1)),
+    [count],
+  )
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (count < 2) return
+    if (e.key === "ArrowLeft") {
+      e.preventDefault()
+      goToPrevious()
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault()
+      goToNext()
+    }
   }
 
-  const goToNext = () => {
-    setCurrentIndex((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1))
-  }
+  const src = displayImages[currentIndex] || "/placeholder.svg"
+  const blur = blurs?.[currentIndex] ?? blurFor(src)
 
   return (
-    <div className="relative h-40 sm:h-56 md:h-72 overflow-hidden">
-      {/* Main Image */}
-      <img
-        src={displayImages[currentIndex] || "/placeholder.svg"}
-        alt={`${title} - Image ${currentIndex + 1}`}
-        className="w-full h-full object-cover transition-opacity duration-300"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-
-      {/* Previous Button - Smaller on mobile, larger on desktop */}
-      {displayImages.length > 1 && (
-        <button
-          onClick={goToPrevious}
-          className="absolute left-1.5 sm:left-3 top-1/2 -translate-y-1/2 z-10 bg-background/80 hover:bg-background/90 rounded-full p-1.5 sm:p-2 transition-all hover:scale-110"
-          aria-label="Previous image"
+    <div
+      role="group"
+      aria-roledescription="carousel"
+      aria-label={`${t.slideshow.photoOf} ${title}`}
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      className="relative h-40 overflow-hidden bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:h-56 md:h-72"
+    >
+      <AnimatePresence initial={false}>
+        <motion.div
+          key={currentIndex}
+          initial={{ opacity: 0, scale: 1.04 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="absolute inset-0"
         >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
+          <Image
+            src={src}
+            alt={`${title} — ${t.slideshow.photoNofM.replace("{n}", String(currentIndex + 1)).replace("{m}", String(count))}`}
+            fill
+            sizes="(max-width: 640px) 100vw, 640px"
+            placeholder={blur ? "blur" : "empty"}
+            blurDataURL={blur ?? undefined}
+            // The optimizer refuses SVG by default; the fallback ships as-is.
+            unoptimized={src.endsWith(".svg")}
+            className="object-cover"
+          />
+        </motion.div>
+      </AnimatePresence>
+
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+
+      <p aria-live="polite" className="sr-only">
+        {t.slideshow.photoNofM.replace("{n}", String(currentIndex + 1)).replace("{m}", String(count))}
+      </p>
+
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={goToPrevious}
+            aria-label={t.slideshow.previousPhoto}
+            className="absolute left-1.5 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/85 text-foreground transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:left-3"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={goToNext}
+            aria-label={t.slideshow.nextPhoto}
+            className="absolute right-1.5 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/85 text-foreground transition-colors hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:right-3"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+
+          <div className="text-coord numeric absolute right-2 top-2 z-10 rounded-full bg-background/90 px-2.5 py-1.5 text-muted-foreground backdrop-blur-sm sm:right-3 sm:top-3">
+            {currentIndex + 1} / {count}
+          </div>
+        </>
       )}
 
-      {/* Next Button */}
-      {displayImages.length > 1 && (
-        <button
-          onClick={goToNext}
-          className="absolute right-1.5 sm:right-3 top-1/2 -translate-y-1/2 z-10 bg-background/80 hover:bg-background/90 rounded-full p-1.5 sm:p-2 transition-all hover:scale-110"
-          aria-label="Next image"
-        >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
-      )}
-
-      {/* Image Counter - Reduced font size and padding on mobile */}
-      {displayImages.length > 1 && (
-        <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-10 bg-background/90 backdrop-blur-sm px-2 sm:px-3 py-1 rounded-full text-xs font-semibold">
-          {currentIndex + 1} / {displayImages.length}
+      <div className="absolute inset-x-2 bottom-2 z-10 flex items-center justify-between gap-2 sm:inset-x-4 sm:bottom-3">
+        <div className="w-fit rounded-lg bg-background/95 px-2.5 py-1.5 backdrop-blur-sm">
+          <span className={cn("text-xs font-semibold sm:text-sm", statusColor)}>
+            {statusLabel}
+          </span>
         </div>
-      )}
 
-      {/* Availability Badge */}
-      <div className="absolute bottom-2 sm:bottom-3 left-2 right-2 sm:left-4 sm:right-4 flex justify-between items-center gap-2">
-        <div className="bg-background/95 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg w-fit">
-          <span className={`text-xs sm:text-sm font-semibold ${statusColor}`}>Ketersediaan: {availabilityStatus}</span>
-        </div>
-
-        {/* Dot Indicators */}
-        {displayImages.length > 1 && (
-          <div className="flex gap-1">
+        {count > 1 && (
+          <div className="flex gap-1.5">
             {displayImages.map((_, index) => (
               <button
                 key={index}
+                type="button"
                 onClick={() => setCurrentIndex(index)}
-                className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full transition-all ${
-                  index === currentIndex ? "bg-white w-3 sm:w-4" : "bg-white/50 hover:bg-white/75"
-                }`}
-                aria-label={`Go to image ${index + 1}`}
-              />
+                aria-label={t.slideshow.viewPhoto.replace("{n}", String(index + 1))}
+                aria-current={index === currentIndex}
+                className="group flex h-6 w-6 items-center justify-center focus-visible:outline-none"
+              >
+                <span
+                  className={cn(
+                    "block h-1.5 rounded-full transition-all duration-300",
+                    index === currentIndex
+                      ? "w-6 bg-brand-orange"
+                      : "w-1.5 bg-white/60 group-hover:bg-white/90 group-focus-visible:bg-white",
+                  )}
+                />
+              </button>
             ))}
           </div>
         )}

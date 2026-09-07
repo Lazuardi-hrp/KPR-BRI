@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Foto belum tersedia">
+  <rect width="400" height="300" fill="#f3f6fb"/>
+  <g fill="none" stroke="#55647a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity=".55">
+    <path d="M162 148 200 118l38 30"/>
+    <path d="M172 144v38h56v-38"/>
+  </g>
+  <text x="200" y="216" text-anchor="middle" fill="#55647a"
+        font-family="'Plus Jakarta Sans',system-ui,-apple-system,sans-serif"
+        font-size="15" font-weight="600" letter-spacing="1.4">Foto belum tersedia</text>
+</svg>

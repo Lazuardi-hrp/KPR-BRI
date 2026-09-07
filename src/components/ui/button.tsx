@@ -5,30 +5,41 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "group relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold ring-offset-background transition-[transform,background-color,box-shadow,border-color] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.97] [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default:
+          "bg-primary text-primary-foreground shadow-sm shadow-primary/20 hover:bg-brand-deep",
+        outline:
+          "border border-border bg-white text-primary hover:border-primary/40 hover:bg-primary/[0.04]",
+        accent:
+          "bg-brand-orange text-brand-orange-fg shadow-sm shadow-brand-orange/25 hover:brightness-[0.97]",
         destructive:
-          "bg-[#F1EFEF] hover:bg-[#7D7C7C] text-dark hover:text-white py-2 rounded-md",
-        ghost: 
-          "bg-[#004D40] hover:bg-[#00695C] text-white py-2 rounded-md",
+          "bg-destructive text-white hover:bg-destructive/90",
+        ghost:
+          "text-primary hover:bg-primary/[0.06]",
         secondary:
-          "bg-red-500 hover:bg-red-100 hover:text-red-500 text-red-100 py-2 rounded-md"
+          "border border-border bg-secondary text-secondary-foreground hover:bg-accent",
+        /* Primary CTA on a bg-ink surface. */
+        ink:
+          "bg-white text-primary shadow-ink hover:bg-mist-200 ring-offset-ink focus-visible:ring-brand-orange",
+        /* Secondary CTA on a bg-ink surface. */
+        "ink-outline":
+          "border border-white/25 text-white hover:border-brand-orange/40 hover:bg-white/10 ring-offset-ink focus-visible:ring-brand-orange",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
+        default: "h-11 px-6 py-2",
+        sm: "h-11 px-5 text-sm",
+        lg: "h-12 px-8 text-base",
+        icon: "h-11 w-11",
       },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
     },
-  }
+  },
 )
 
 export interface ButtonProps
@@ -47,7 +58,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       />
     )
-  }
+  },
 )
 Button.displayName = "Button"
 

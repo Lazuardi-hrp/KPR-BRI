@@ -1,0 +1,112 @@
+import Link from "next/link"
+import { redirect } from "next/navigation"
+import {
+  LayoutDashboard,
+  Home,
+  Inbox,
+  Settings,
+  LogOut,
+  ShieldCheck,
+  BadgeCheck,
+  ShieldAlert,
+  ChartNoAxesColumn,
+} from "lucide-react"
+
+import { getSesiStaf } from "@/lib/auth"
+import { keluar } from "@/app/admin/actions"
+import { getNotifikasi, getJumlahBelumDibaca } from "@/lib/queries/admin"
+import NotificationBell from "@/components/admin/notification-bell"
+
+const menu = [
+  { href: "/admin", label: "Ringkasan", icon: LayoutDashboard, adminSaja: false },
+  { href: "/admin/prospek", label: "Prospek", icon: Inbox, adminSaja: false },
+  { href: "/admin/verifikasi", label: "Verifikasi", icon: BadgeCheck, adminSaja: false },
+  { href: "/admin/perumahan", label: "Perumahan", icon: Home, adminSaja: false },
+  // Peristiwa penyalahgunaan hanya terbaca admin (abuse_events_read_admin);
+  // menampilkan tautannya ke pengembang hanya mengantar mereka ke halaman kosong.
+  { href: "/admin/keamanan", label: "Keamanan", icon: ShieldAlert, adminSaja: true },
+  // Alasan yang sama seperti Keamanan di atas: kebijakan events_read_staff
+  // pada housing_events berbunyi using (public.is_admin()), jadi seorang
+  // pengembang yang menekan tautan ini hanya akan sampai pada dasbor yang
+  // seluruh angkanya nol — dan nol yang berasal dari RLS tidak bisa
+  // dibedakan dari nol yang berarti tidak ada pengunjung.
+  { href: "/admin/analitik", label: "Analitik", icon: ChartNoAxesColumn, adminSaja: true },
+  { href: "/admin/pengaturan", label: "Pengaturan", icon: Settings, adminSaja: false },
+]
+
+/**
+ * Shell admin bersesi.
+ *
+ * Berada di route group (secure) — BUKAN langsung di src/app/admin/ — supaya
+ * /admin/login tidak ikut terbungkus. Ketika layout ini membungkus halaman
+ * login, penjagaannya memicu perulangan tak berujung: login -> tanpa sesi ->
+ * alihkan ke login -> layout jalan lagi. Terdeteksi sebagai
+ * ERR_TOO_MANY_REDIRECTS saat uji browser.
+ */
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const sesi = await getSesiStaf()
+
+  // Middleware sudah mengalihkan tamu, tetapi middleware bisa dilewati dan
+  // hanya memeriksa "ada sesi", bukan "punya peran". Ini pemeriksaan kedua;
+  // RLS di basis data adalah yang ketiga dan yang menentukan.
+  if (!sesi) redirect("/admin/login")
+
+  const [notifikasi, belumDibaca] = await Promise.all([
+    getNotifikasi(20),
+    getJumlahBelumDibaca(),
+  ])
+
+  const tautan = menu.filter((m) => !m.adminSaja || sesi.role === "admin")
+
+  return (
+    <div className="min-h-screen bg-secondary">
+      <header className="border-b border-border bg-white">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <Link href="/admin" className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+            <span className="font-display text-lg font-extrabold tracking-[-0.02em] text-foreground">
+              KPR BRI
+            </span>
+          </Link>
+
+          <nav className="order-3 -mx-1 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
+            {tautan.map((m) => (
+              <Link
+                key={m.href}
+                href={m.href}
+                className="flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <m.icon className="h-4 w-4" />
+                {m.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-3">
+            <NotificationBell awal={notifikasi} belumDibaca={belumDibaca} />
+            <div className="text-right">
+              <p className="text-sm font-semibold leading-tight text-foreground">
+                {sesi.fullName || sesi.email}
+              </p>
+              <p className="text-xs capitalize text-muted-foreground">{sesi.role}</p>
+            </div>
+            <form action={keluar}>
+              <button
+                type="submit"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Keluar"
+                title="Keluar"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+    </div>
+  )
+}
